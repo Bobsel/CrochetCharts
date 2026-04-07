@@ -1,0 +1,70 @@
+version: '3'
+
+vars:
+  BUILD_DIR: build
+  BUILD_DIR_RELEASE: build_release
+  BUILD_DIR_PROFILE: build_profile
+  NPROC:
+    sh: nproc
+
+tasks:
+  build:
+    desc: Debug build (CMake + make)
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - cd {{.BUILD_DIR}} && cmake .. -DCMAKE_BUILD_TYPE=Debug -Wno-dev
+      - cd {{.BUILD_DIR}} && make -j{{.NPROC}}
+    sources:
+      - src/**/*.cpp
+      - src/**/*.h
+      - src/**/*.ui
+      - CMakeLists.txt
+      - src/CMakeLists.txt
+
+  build:release:
+    desc: Release build
+    cmds:
+      - mkdir -p {{.BUILD_DIR_RELEASE}}
+      - cd {{.BUILD_DIR_RELEASE}} && cmake .. -DCMAKE_BUILD_TYPE=Release -Wno-dev
+      - cd {{.BUILD_DIR_RELEASE}} && make -j{{.NPROC}}
+    sources:
+      - src/**/*.cpp
+      - src/**/*.h
+      - src/**/*.ui
+      - CMakeLists.txt
+      - src/CMakeLists.txt
+
+  run:
+    desc: Build and launch the app
+    deps: [build]
+    cmds:
+      - ./{{.BUILD_DIR}}/src/CrochetCharts
+
+  test:
+    desc: Build with tests and run them
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - cd {{.BUILD_DIR}} && cmake .. -DCMAKE_BUILD_TYPE=Debug -DUNIT_TESTING=ON -Wno-dev
+      - cd {{.BUILD_DIR}} && make -j{{.NPROC}}
+      - ./{{.BUILD_DIR}}/tests/tests
+
+  clean:
+    desc: Remove all build artifacts
+    cmds:
+      - rm -rf {{.BUILD_DIR}} {{.BUILD_DIR_RELEASE}} {{.BUILD_DIR_PROFILE}}
+
+  setup:
+    desc: Install git hooks
+    cmds:
+      - cp utils/hooks/* .git/hooks/
+      - echo "Hooks installed."
+
+  profile:
+    desc: Profile build, run, and generate call graph
+    cmds:
+      - mkdir -p {{.BUILD_DIR_PROFILE}}
+      - cd {{.BUILD_DIR_PROFILE}} && cmake .. -DCMAKE_BUILD_TYPE=Profile -Wno-dev
+      - cd {{.BUILD_DIR_PROFILE}} && make -j{{.NPROC}}
+      - ./{{.BUILD_DIR_PROFILE}}/src/CrochetCharts
+      - gprof {{.BUILD_DIR_PROFILE}}/src/CrochetCharts | bin/gprof2dot.py | dot -Tpng -o profile.png
+      - echo "Call graph written to profile.png"
