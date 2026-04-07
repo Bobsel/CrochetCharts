@@ -14,3 +14,4 @@ Makefile.Debug
 Makefile.Release
 object_script.CrochetCharts.Debug
 object_script.CrochetCharts.Release
+.idea
