@@ -55,6 +55,11 @@ set(crochet_app_cpp
     ../src/settings.cpp        
     ../src/stitchlibrarydelegate.cpp  
     ../src/undogroup.cpp
+    ../src/ChartImage.cpp
+    ../src/ChartItemTools.cpp
+    ../src/chartLayer.cpp
+    ../src/resizeui.cpp
+    ../src/selectionband.cpp
     ${CMAKE_BINARY_DIR}/version.cpp )
 
 
