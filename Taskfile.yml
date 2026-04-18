@@ -8,9 +8,31 @@ vars:
     sh: nproc
 
 tasks:
+  _clear-stale-cache:
+    internal: true
+    # CMake bakes absolute paths (CMAKE_HOME_DIRECTORY) into CMakeCache.txt.
+    # If the current source directory differs from the cached one (e.g. the
+    # devcontainer was first opened in VS Code at /workspaces/... and later
+    # in IntelliJ at /IdeaProjects/...), cmake refuses to regenerate. Wipe
+    # the build dir when that happens so the next cmake invocation starts
+    # cleanly.
+    vars:
+      DIR: '{{.DIR | default "build"}}'
+    cmds:
+      - |
+        if [ -f "{{.DIR}}/CMakeCache.txt" ]; then
+          cached=$(sed -n 's/^CMAKE_HOME_DIRECTORY:INTERNAL=//p' "{{.DIR}}/CMakeCache.txt")
+          if [ "$cached" != "$(pwd)" ]; then
+            echo "Stale CMake cache in {{.DIR}}: '$cached' != '$(pwd)' — clearing"
+            rm -rf "{{.DIR}}"
+          fi
+        fi
+
   build:
     desc: Debug build (CMake + make)
     cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR}}'}
       - mkdir -p {{.BUILD_DIR}}
       - cd {{.BUILD_DIR}} && cmake .. -DCMAKE_BUILD_TYPE=Debug -Wno-dev
       - cd {{.BUILD_DIR}} && make -j{{.NPROC}}
@@ -24,6 +46,8 @@ tasks:
   build:release:
     desc: Release build
     cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR_RELEASE}}'}
       - mkdir -p {{.BUILD_DIR_RELEASE}}
       - cd {{.BUILD_DIR_RELEASE}} && cmake .. -DCMAKE_BUILD_TYPE=Release -Wno-dev
       - cd {{.BUILD_DIR_RELEASE}} && make -j{{.NPROC}}
@@ -43,6 +67,8 @@ tasks:
   test:
     desc: Build with tests and run them (uses xvfb-run if available, for headless CI/devcontainer)
     cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR}}'}
       - mkdir -p {{.BUILD_DIR}}
       - cd {{.BUILD_DIR}} && cmake .. -DCMAKE_BUILD_TYPE=Debug -DUNIT_TESTING=ON -Wno-dev
       - cd {{.BUILD_DIR}} && make -j{{.NPROC}}
@@ -68,6 +94,8 @@ tasks:
   profile:
     desc: Profile build, run, and generate call graph
     cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR_PROFILE}}'}
       - mkdir -p {{.BUILD_DIR_PROFILE}}
       - cd {{.BUILD_DIR_PROFILE}} && cmake .. -DCMAKE_BUILD_TYPE=Profile -Wno-dev
       - cd {{.BUILD_DIR_PROFILE}} && make -j{{.NPROC}}
