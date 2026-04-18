@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<stitch_set>
+    <name>Test Basic Stitches</name>
+    <author>Test Fixture</author>
+
+    <stitch>
+        <name>sl st</name>
+        <icon>:/stitches/sl_st.svg</icon>
+        <description>slip stitch</description>
+        <category>Test</category>
+        <ws>sl st</ws>
+    </stitch>
+
+    <stitch>
+        <name>ch</name>
+        <icon>:/stitches/ch.svg</icon>
+        <description>chain</description>
+        <category>Test</category>
+        <ws>ch</ws>
+    </stitch>
+
+    <stitch>
+        <name>sc</name>
+        <icon>:/stitches/sc.svg</icon>
+        <description>single crochet</description>
+        <category>Test</category>
+        <ws>sc</ws>
+    </stitch>
+
+    <stitch>
+        <name>hdc</name>
+        <icon>:/stitches/hdc.svg</icon>
+        <description>half double crochet</description>
+        <category>Test</category>
+        <ws>hdc</ws>
+    </stitch>
+
+    <stitch>
+        <name>dc</name>
+        <icon>:/stitches/dc.svg</icon>
+        <description>double crochet</description>
+        <category>Test</category>
+        <ws>dc</ws>
+    </stitch>
+
+</stitch_set>
