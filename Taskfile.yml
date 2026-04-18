@@ -41,12 +41,17 @@ tasks:
       - ./{{.BUILD_DIR}}/src/CrochetCharts
 
   test:
-    desc: Build with tests and run them
+    desc: Build with tests and run them (uses xvfb-run if available, for headless CI/devcontainer)
     cmds:
       - mkdir -p {{.BUILD_DIR}}
       - cd {{.BUILD_DIR}} && cmake .. -DCMAKE_BUILD_TYPE=Debug -DUNIT_TESTING=ON -Wno-dev
       - cd {{.BUILD_DIR}} && make -j{{.NPROC}}
-      - ./{{.BUILD_DIR}}/tests/tests
+      - |
+        if command -v xvfb-run >/dev/null 2>&1; then
+          xvfb-run -a --server-args='-screen 0 1024x768x24' ./{{.BUILD_DIR}}/tests/tests
+        else
+          ./{{.BUILD_DIR}}/tests/tests
+        fi
 
   clean:
     desc: Remove all build artifacts

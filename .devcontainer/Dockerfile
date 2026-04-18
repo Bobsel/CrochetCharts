@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     libqtwebkit-dev \
     libhunspell-dev \
     gdb \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
