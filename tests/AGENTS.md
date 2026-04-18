@@ -1,20 +1,22 @@
 # tests/ — Unit Tests
 
-Qt 4 `QtTest`-based unit tests. 6 test classes, covers ~5% of src/. Not a safety net.
+Qt 4 `QtTest`-based unit tests. 7 test classes, covers ~5% of src/. Not a safety net — with one exception: `TestFileFactory` is the Qt4→Qt6 port regression oracle.
 
 ## STRUCTURE
 
 ```
 main.cpp                       # Manual QTest::qExec() chain — ORDER MATTERS (TestSettings runs first)
-test{name}.{cpp,h}             # One class per module (TestSettings/Stitch/StitchSet/StitchLibrary/Cell/TextView)
-CMakeLists.txt                 # Builds `tests` executable — RELINKS the whole app
+test{name}.{cpp,h}             # One class per module (TestSettings/Stitch/StitchSet/StitchLibrary/Cell/TextView/FileFactory)
+CMakeLists.txt                 # Builds `tests` executable — RELINKS the whole app; wires CTest with xvfb-run
+fixtures/                      # Versioned test inputs (decoupled from production content)
+fixtures/port/                 # Frozen Qt4-era fixtures + snapshots — see fixtures/port/README.md
 ```
 
 ## WHAT'S COVERED vs NOT
 
 | Covered | Not covered (major gaps) |
 |---------|--------------------------|
-| stitch, stitchset, stitchlibrary, cell, settings, textview | scene, chartview, crochettab, all docks, all dialogs, crochetchartcommands, file/file_v1/file_v2/filefactory, exportui, ChartImage, colorreplacer, legends, mainwindow, debug |
+| stitch, stitchset, stitchlibrary, cell, settings, textview, filefactory (port-fixture round-trip) | scene, chartview, crochettab, all docks, all dialogs, crochetchartcommands, file_v1 binary format, exportui, ChartImage, colorreplacer, legends, mainwindow (beyond construction smoke), debug |
 
 ## RULES
 
@@ -41,16 +43,27 @@ Consequences:
 ## COMMANDS
 
 ```bash
-task test                  # preferred: cmake -DUNIT_TESTING=ON + make + run
-./bin/tests                # legacy wrapper
-cd build && ctest          # NOT configured — does nothing useful
+task test                              # preferred: cmake -DUNIT_TESTING=ON + make + run
+./bin/tests                            # legacy wrapper
+cd build && ctest --output-on-failure  # CI-style runner; same binary, same CWD, xvfb-run auto-detected
 ```
 
 ## FIXTURES
 
 `tests/fixtures/` holds versioned test inputs decoupled from production content.
 - `basic_stitches.xml` — 5 stitches (sl st, ch, sc, hdc, dc) under category `Test`. Used by `TestStitchSet` so that edits to `crochet.xml` do not cascade into test failures.
+- `fixtures/port/` — **frozen Qt4-era port fixtures** (`blank_v2.crochetcharts`, `basic_v2.crochetcharts`, `basic_v2.snapshot.txt`). Generated once on the Qt4 baseline; committed as bytes. The Qt6 port's regression oracle. See `fixtures/port/README.md`. **Never regenerate on CI.**
 - Prefer adding new fixtures here over loading `../crochet.xml`.
+
+## PORT-REGRESSION SUITE (`TestFileFactory`)
+
+Purpose: provide a Qt-version-independent semantic oracle for the file I/O layer before any port work.
+
+- **Dump format** (`dumpScene(scene)` in `testfilefactory.cpp`): one line per `Cell` item, fields `pos rot scale bg color stitch layer`, floats to 3 decimals, lexicographically sorted for determinism. Extend the dump fields in the same commit as the field being tracked.
+- **Generate-if-missing pattern**: `generate*_ifMissing()` slots write the fixture/snapshot when absent, otherwise assert non-empty. First run seeds; subsequent runs verify. After first seeding, **commit the files** — CI must never see a missing fixture.
+- **`TestMW` helper** (in anonymous namespace of `testfilefactory.cpp`): subclasses `MainWindow` to expose `protected: tabWidget()` and `createTab()` via `using`-declarations. Needed because tests are not friends of `MainWindow`. Use this pattern for future tests that need to drive `MainWindow` programmatically.
+- **`QPainter::fontMetrics: Painter not active` warnings** during `TestFileFactory` runs are benign Qt4 noise — widgets are constructed without being shown. Ignore unless they become errors.
+- **`loadChart Unknown tag: ""`** warnings are a pre-existing quirk in `File_v2::loadChart` (whitespace between XML elements). Not test-introduced.
 
 ## ANTI-PATTERNS
 

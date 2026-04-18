@@ -24,6 +24,7 @@
 #include "testcell.h"
 #include "testtextview.h"
 #include "teststitchlibrary.h"
+#include "testfilefactory.h"
 
 int main(int argc, char** argv) 
 {
@@ -64,6 +65,11 @@ int main(int argc, char** argv)
     retval +=QTest::qExec(test, argc, argv);
     delete test;
     test = 0;
-    
+
+    test = new TestFileFactory();
+    retval +=QTest::qExec(test, argc, argv);
+    delete test;
+    test = 0;
+
     return (retval ? 1 : 0);
 }

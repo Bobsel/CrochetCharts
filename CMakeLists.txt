@@ -91,6 +91,7 @@ add_subdirectory(docs)
 add_subdirectory(src)
 
 if(UNIT_TESTING)
+    enable_testing()
     add_subdirectory(tests)
 endif()
 

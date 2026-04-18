@@ -77,3 +77,20 @@ qt4_wrap_ui(crochet_ui_h ${crochet_ui})
 
 add_executable(tests main.cpp ${crochet_test_srcs} ${crochet_test_moc_srcs} ${crochet_app_rcc_srcs} ${crochet_app_cpp} ${crochet_ui_h})
 target_link_libraries(tests ${QT_LIBRARIES})
+
+# CTest wiring. `task test` still works unchanged; this adds CI-friendly
+# `ctest --output-on-failure` on top of the same binary. Uses xvfb-run when
+# available (devcontainer, headless CI) so tests that need QApplication/X11
+# do not require a real DISPLAY. CWD is tests/ so that ../crochet.xml and
+# ../stitches/*.svg resolve (mirrors Taskfile.yml).
+# enable_testing() is called at the root CMakeLists.txt.
+find_program(XVFB_RUN xvfb-run)
+if(XVFB_RUN)
+    add_test(NAME tests
+        COMMAND ${XVFB_RUN} -a $<TARGET_FILE:tests>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+else()
+    add_test(NAME tests
+        COMMAND $<TARGET_FILE:tests>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
