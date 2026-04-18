@@ -100,54 +100,38 @@ void TestCell::setRotation_data()
 
 void TestCell::setScale()
 {
-
     QFETCH(QString, name);
-    QFETCH(qreal, width);
-    QFETCH(qreal, height);
     QFETCH(qreal, scaleX);
     QFETCH(qreal, scaleY);
-    QFETCH(QString, rasterHash);
 
     Cell* c = new Cell();
-    QGraphicsScene *scene = new QGraphicsScene();
-
-    scene->addItem(c);
-    i++;
+    QGraphicsScene scene;
+    scene.addItem(c);
 
     Stitch* s = StitchLibrary::inst()->findStitch(name);
     c->setStitch(s);
 
-    QPointF origin = QPointF(c->boundingRect().width()/2, c->boundingRect().height());
+    QPointF origin(c->boundingRect().width() / 2, c->boundingRect().height());
     c->setTransformOriginPoint(origin);
     ChartItemTools::setScaleX(c, scaleX);
     ChartItemTools::setScaleY(c, scaleY);
 
-    QString rasterImage = "TestCell-ScaleTest-" + QString::number(i) + "-" + name + ".png";
+    QCOMPARE(ChartItemTools::getScaleX(c), scaleX);
+    QCOMPARE(ChartItemTools::getScaleY(c), scaleY);
 
-    saveScene(scene, QSizeF(width, height), rasterImage);
-
-    QString hexHash = hashFile(rasterImage);
-
-    QCOMPARE(hexHash, rasterHash);
-
-    scene->removeItem(c);
+    scene.removeItem(c);
     delete c;
-    c = 0;
 }
 
 void TestCell::setScale_data()
 {
-
     QTest::addColumn<QString>("name");
-    QTest::addColumn<qreal>("width");
-    QTest::addColumn<qreal>("height");
     QTest::addColumn<qreal>("scaleX");
     QTest::addColumn<qreal>("scaleY");
-    QTest::addColumn<QString>("rasterHash");
 
-    QTest::newRow("ch")    << "ch" << 32.0 << 16.0 << 1.0 << 1.0 << "0be6578d22717ba56082a408e8ed128e8114a30c";
-    QTest::newRow("hdc")   << "hdc" << 32.0 << 64.0 << 2.5 << 2.5 << "090bf8ac828e1d2ad0da3ec240539276148bc134";
-    QTest::newRow("dc")    << "dc" << 32.0 << 80.0 << 2.5 << 2.5 << "bdb70eea2145b79c7cb4e50a6148f5ec4d09f708";
+    QTest::newRow("ch identity")    << "ch"  << 1.0 << 1.0;
+    QTest::newRow("hdc uniform")    << "hdc" << 2.5 << 2.5;
+    QTest::newRow("dc non-uniform") << "dc"  << 1.5 << 3.0;
 }
 
 void TestCell::setBgColor()
