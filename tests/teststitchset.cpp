@@ -70,8 +70,8 @@ void TestStitchSet::findStitch_data()
     QTest::addColumn<QString>("cat");
     QTest::addColumn<QString>("ws");
 
-    QTest::newRow("sl st") << "sl st" << "stitches/slip.svg" << "slip stitch" << "Basic" << "sl st";
-    QTest::newRow("ch") << "ch" << "stitches/chain.svg" << "chain" << "Basic" << "ch";
+    QTest::newRow("sl st") << "sl st" << true << "stitches/slip.svg" << "slip stitch" << "Basic" << "sl st";
+    QTest::newRow("ch") << "ch" << true << "stitches/chain.svg" << "chain" << "Basic" << "ch";
 }
 
 void TestStitchSet::saveLoadDataSet()
