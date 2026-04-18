@@ -91,6 +91,29 @@ Sync rules, trigger table, and workflow live in the `arc42-sync` skill at `.agen
 - **Qt4 idioms only**: `SIGNAL(...)`/`SLOT(...)` string macros, `qInstallMsgHandler` (not `qInstallMessageHandler`), `qt4_add_resources`, `qt4_wrap_ui`. Do not mix Qt5 API.
 - **Copy prevention**: `Q_DISABLE_COPY` is NOT used anywhere — copyability of model classes is accidental, not enforced.
 - **Scene border**: `SCENE_CLAMP_BORDER_SIZE 50` define in `scene.h`.
+- **File headers — new files**: use a minimal SPDX header, nothing else. The root `LICENSE` (GPLv3) covers the terms; do not duplicate the 13-line grant.
+  ```cpp
+  // SPDX-License-Identifier: GPL-3.0-or-later
+  // Copyright (c) <year> <Your Name> <your@email>
+  ```
+  For CMake / shell / Python / YAML use `#` comments with the same two lines. New artwork (`stitches/*.svg`, icons): `SPDX-License-Identifier: CC-BY-SA-4.0` in an XML comment.
+- **File headers — modified existing files**: when you make a substantive change to a file with an existing Stitch Works Software header, add your copyright line to the header in the same commit. Rules:
+  - **Trigger**: new method / class member / non-trivial logic, rewrites, feature additions, refactors. **Not** for formatting, renames, typo fixes, `#include` tidy-ups, or one-line compiler-warning fixes.
+  - **Where**: insert directly after the `Brian C. Milco <bcmilco@gmail.com>` line, inside the existing comment block. Do not create a second comment block.
+  - **What to add**: one line — `Copyright (c) <year> <Your Name> <your@email>`. Year = year of *first* substantive change; use a range (`2026-2027`) only once you make substantive changes in a later year.
+  - **Do not touch**: the original `Copyright (c) 2010-2014 Stitch Works Software` line, the `Brian C. Milco` line, or the GPLv3 grant paragraph. Add only; never overwrite, reformat, or delete.
+  - **No sweep-adds**: only add your line to files you actually changed in the commit. A tree-wide `sed` overclaims authorship.
+
+  Example diff for `src/main.cpp`:
+  ```diff
+    Copyright (c) 2010-2014 Stitch Works Software
+    Brian C. Milco <bcmilco@gmail.com>
+  + Copyright (c) 2026 Stefan Dieringer <stefan.dieringer@googlemail.com>
+
+    This file is part of Crochet Charts.
+  ```
+  Full rationale and GPLv3 §5a reference: `docs/plans/license-copyright-and-rename.md`.
+- **File headers — who adds a copyright line**: per-file copyright lines are scoped to the fork's maintainer(s). The "modified existing files" rule above applies to maintainers only — drive-by and occasional contributors do **not** add per-file lines. They are credited via git history (and an `AUTHORS` file, when one is added); their copyright is still legally theirs. A recurring contributor may be added to a file header when they take structural ownership of a subsystem, decided case-by-case. Recommended (not yet enforced): a `Signed-off-by: Name <email>` line in each commit (DCO, Linux-kernel style) as the contributor's assertion that they may submit the change under GPLv3.
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
