@@ -25,7 +25,7 @@ This directory holds the architecture documentation for CrochetCharts. It follow
 
 ## How this doc stays correct
 
-This document MUST be kept in sync with code. See `AGENTS.md` → "Architecture doc sync" for the rules. In short: changes to public structure, file formats, build, deployment, or known tech debt require a matching edit here in the same commit.
+This document MUST be kept in sync with code. The sync rules, trigger table, and workflow live in the `arc42-sync` skill at `.agents/skills/arc42-sync/SKILL.md` — load it before editing architecture-relevant code. In short: changes to public structure, file formats, build, deployment, or known tech debt require a matching edit here in the same commit.
 
 ## Conventions used in this doc
 
