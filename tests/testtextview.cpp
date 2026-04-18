@@ -78,8 +78,13 @@ void TestTextView::testGenerateTextRow_data()
      QTest::addColumn<QString>("cleanOutput");
      QTest::addColumn<QString>("repeatOutput");
      QTest::addColumn<QString>("cleanRepeat");
-     
-     QTest::newRow("row 1") << 1 << "" << "" << "" << "";
+
+     const QString row1Plain =
+         "ch 1, twisted sc 1, tr 1, hdc3tog 1, ch 1, tr 1, hdc2tog 1, twisted sc 1, tr 1";
+     const QString row1Clean =
+         "Ch 1, twisted sc 1, tr 1, hdc3tog 1, ch 1, tr 1, hdc2tog 1, twisted sc 1, tr 1.";
+
+     QTest::newRow("row 1") << 1 << row1Plain << row1Clean << row1Plain << row1Clean;
 
 }
 
