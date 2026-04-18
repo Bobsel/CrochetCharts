@@ -1,6 +1,7 @@
 /****************************************************************************\
  Copyright (c) 2010-2014 Stitch Works Software
  Brian C. Milco <bcmilco@gmail.com>
+ Copyright (c) 2026 Stefan Dieringer <stefan.dieringer@googlemail.com>
 
  This file is part of Crochet Charts.
 
