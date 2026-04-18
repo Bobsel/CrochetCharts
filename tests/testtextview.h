@@ -34,11 +34,9 @@ class TestTextView : public QObject
     Q_OBJECT
 private slots:
     void initTestCase();
-    void testGenerateText();
     void testGenerateTextRow();
     void testGenerateTextRow_data();
     void testCopyInstructions();
-    void testCopyInstructions_data();
     void cleanupTestCase();
     
 private:

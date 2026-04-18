@@ -40,11 +40,6 @@ void TestTextView::initTestCase()
     qDebug() << mTextGrid;
 }
 
-void TestTextView::testGenerateText()
-{
-
-}
-
 void TestTextView::testGenerateTextRow()
 {
     QFETCH(int, row);
@@ -88,15 +83,10 @@ void TestTextView::testGenerateTextRow_data()
 
 }
 
-void TestTextView::testCopyInstructions_data()
-{
-
-}
-
 void TestTextView::testCopyInstructions()
 {
     QString instructions = mTv->copyInstructions();
-    qDebug() << instructions;
+    QVERIFY(!instructions.isEmpty());
 }
 
 void TestTextView::cleanupTestCase()
