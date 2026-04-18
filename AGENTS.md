@@ -17,7 +17,9 @@ CrochetCharts/
 ├── stitches/       # 129 SVG stitch icons + stitches.qrc. See stitches/AGENTS.md
 ├── cmake/modules/  # FindHunSpell, GetGitRevisionDescription, DocbookGen, NSIS template, version.cpp.in
 ├── images/         # Toolbar icons + macOS .iconset bundles (Crochet Charts.iconset, PatternDocument.iconset)
-├── docs/           # DocBook user guide (index.docbook.in → HTML/PDF via fop + xsltproc)
+├── docs/
+│   ├── architecture/  # arc42 software architecture doc (multi-file, mermaid). See docs/architecture/README.md
+│   └── index.docbook.in  # End-user DocBook manual (HTML/PDF via fop + xsltproc)
 ├── resources/      # CPack configs, .desktop.in, MIME xml, macOS Entitlements.plist, deb/{postinst,prerm}
 ├── bin/            # Legacy bash scripts (build, tests, profile, setup) + gprof2dot.py + asan_symbolize.py
 ├── utils/hooks/    # pre-commit git hooks (bash)
@@ -69,6 +71,38 @@ CrochetCharts/
 | `StitchLibrary` | QObject (singleton) | src/stitchlibrary.h:46 | Built-in + user stitch sets |
 | `StitchSet` | QAbstractItemModel | src/stitchset.h:37 | XML (de)serialization, MVC model |
 | `FileFactory` | plain | src/filefactory.h | Dispatches open/save to versioned File_vN |
+
+## ARCHITECTURE DOC SYNC
+
+The `docs/architecture/` tree is an arc42 software architecture document split into 12 sections plus a README/TOC. It is a **living document**: it must stay in sync with the code.
+
+**Rule of thumb:** if a change would make a statement in `docs/architecture/` wrong, update the doc in the **same commit** as the code change. Do not defer.
+
+Triggers — if a commit touches any of the following, edit the matching section:
+
+| Change | Section(s) to update |
+|---|---|
+| Add/remove a top-level module or class in `src/` | `05-building-blocks.md` (block table + diagrams), `12-glossary.md` if it introduces a new term |
+| Change the file format (new `file_vN.{cpp,h}`, new persisted field) | `05-building-blocks.md` § 5.4, `06-runtime.md` § 6.2/6.4, `08-crosscutting.md` § 8.3, `09-decisions.md` (new ADR if versioning strategy changes) |
+| Change `.devcontainer/` (base image, user, installed tools) | `07-deployment.md` § 7.1, and add/update an ADR in `09-decisions.md` |
+| Change CPack / packaging / `resources/installers.cmake` | `07-deployment.md` § 7.2 |
+| Add / remove a singleton | `08-crosscutting.md` § 8.2 |
+| Add a new `Scene` mode | `08-crosscutting.md` § 8.5 (mode checklist), `11-risks-and-debt.md` (D-1 if god class grows) |
+| Add / remove an external dependency (e.g. drop Hunspell, add a new lib) | `02-constraints.md` § 2.1, `03-context.md` § 3.3 |
+| Add / remove a `QUndoCommand` subclass | `08-crosscutting.md` § 8.1 (keep the "≈ 18" count honest), `06-runtime.md` § 6.3 |
+| Make a load-bearing architecture decision (language level, threading, Qt version, storage) | `09-decisions.md` — add a new ADR with the next number |
+| Eliminate or introduce technical debt | `11-risks-and-debt.md` § 11.2 |
+| Change the quality bar (new perf target, coverage goal) | `10-quality.md` § 10.2 |
+| Rename a file / class / directory referenced with a line number | grep `docs/architecture/*.md` for the old path; update citations |
+
+**When updating:**
+- Keep the mermaid diagrams in sync; `05-building-blocks.md` and `07-deployment.md` are the two most likely to drift.
+- File:line citations are allowed to point to the best location at time of edit; they don't need to be re-verified every commit, but fix them when you happen to touch nearby code.
+- If you add a new ADR, link it from the relevant strategy/section.
+
+**Do NOT**:
+- Do not use the architecture doc to store end-user help — that's `docs/index.docbook.in`.
+- Do not duplicate content between `AGENTS.md` and `docs/architecture/`; this file is the operational index, the arc42 doc is the narrative. Cross-reference instead of copy.
 
 ## CONVENTIONS
 
