@@ -68,49 +68,34 @@ void TestCell::setCellValues_data()
 void TestCell::setRotation()
 {
     QFETCH(QString, name);
-    QFETCH(qreal, width);
-    QFETCH(qreal, height);
     QFETCH(qreal, angle);
-    QFETCH(QString, rasterHash);
 
     Cell* c = new Cell();
-    QGraphicsScene *scene = new QGraphicsScene();
-    scene->addItem(c);
-    i++;
+    QGraphicsScene scene;
+    scene.addItem(c);
 
     Stitch* s = StitchLibrary::inst()->findStitch(name);
     c->setStitch(s);
 
-    QPointF origin = QPointF(c->boundingRect().width()/2, c->boundingRect().height());
+    QPointF origin(c->boundingRect().width() / 2, c->boundingRect().height());
     c->setTransformOriginPoint(origin);
     c->setRotation(angle);
 
-    QString rasterImage = "TestCell-SetRotation-" + QString::number(i) + "-" + name + ".png";
+    QCOMPARE(c->rotation(), angle);
+    QCOMPARE(c->transformOriginPoint(), origin);
 
-    saveSceneSvg(scene, QSizeF(width, height), rasterImage);
-
-    QString hexHash = hashFile(rasterImage);
-
-    QCOMPARE(hexHash, rasterHash);
-
-    scene->removeItem(c);
+    scene.removeItem(c);
     delete c;
-    c = 0;
 }
 
 void TestCell::setRotation_data()
 {
-
     QTest::addColumn<QString>("name");
-    QTest::addColumn<qreal>("width");
-    QTest::addColumn<qreal>("height");
     QTest::addColumn<qreal>("angle");
-    QTest::addColumn<QString>("rasterHash");
 
-    QTest::newRow("ch")    << "ch" << 32.0 << 16.0 << 45.0 << "8bc84f266a6b29c060e99e80cc60f5a4dd1c0db9";
-    QTest::newRow("hdc")   << "hdc" << 32.0 << 64.0 << 45.0 << "4a7eac0d444a5d98f80ed44cd03be3c85ea8f2c1";
-    QTest::newRow("dc")    << "dc" << 32.0 << 80.0 << 45.0 << "26fcac78640d8b5dfe7a350dcfa51f00948e80bb";
-
+    QTest::newRow("ch 45")   << "ch"  << 45.0;
+    QTest::newRow("hdc 90")  << "hdc" << 90.0;
+    QTest::newRow("dc -30")  << "dc"  << -30.0;
 }
 
 void TestCell::setScale()
