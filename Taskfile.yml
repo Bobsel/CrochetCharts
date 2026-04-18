@@ -46,11 +46,12 @@ tasks:
       - mkdir -p {{.BUILD_DIR}}
       - cd {{.BUILD_DIR}} && cmake .. -DCMAKE_BUILD_TYPE=Debug -DUNIT_TESTING=ON -Wno-dev
       - cd {{.BUILD_DIR}} && make -j{{.NPROC}}
+      # Run from tests/ so CWD-relative inputs (../crochet.xml, ../stitches/*.svg) resolve.
       - |
         if command -v xvfb-run >/dev/null 2>&1; then
-          xvfb-run -a --server-args='-screen 0 1024x768x24' ./{{.BUILD_DIR}}/tests/tests
+          (cd tests && xvfb-run -a --server-args='-screen 0 1024x768x24' ../{{.BUILD_DIR}}/tests/tests)
         else
-          ./{{.BUILD_DIR}}/tests/tests
+          (cd tests && ../{{.BUILD_DIR}}/tests/tests)
         fi
 
   clean:
