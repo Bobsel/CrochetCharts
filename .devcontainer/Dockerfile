@@ -2,7 +2,12 @@ FROM ubuntu:18.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y \
+# Enable ppa:git-core/ppa so we get a current git on the EOL Bionic base.
+# Ubuntu 18.04 ships git 2.17 (2018); the PPA ships 2.50+ for Bionic.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        software-properties-common gnupg ca-certificates \
+    && add-apt-repository -y ppa:git-core/ppa \
+    && apt-get update && apt-get install -y \
     build-essential \
     cmake \
     git \
