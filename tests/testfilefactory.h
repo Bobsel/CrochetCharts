@@ -38,6 +38,10 @@ private slots:
     void loadBlankV2_preservesEmpty();
     void loadBasicV2_preservesStructure();
     void roundTrip_basicV2_preservesSnapshot();
+    void generateLegacyV1_ifMissing();
+    void generateLegacyV1Snapshot_ifMissing();
+    void loadLegacyV1_preservesStructure();
+    void roundTrip_legacyV1_preservesSnapshot();
     void cleanupTestCase();
 };
 

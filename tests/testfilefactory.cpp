@@ -45,9 +45,11 @@ public:
     CrochetTab* makeTab(Scene::ChartStyle s) { return createTab(s); }
 };
 
-const QString kBlankPath         = "fixtures/port/blank_v2.crochetcharts";
-const QString kBasicPath         = "fixtures/port/basic_v2.crochetcharts";
-const QString kBasicSnapshotPath = "fixtures/port/basic_v2.snapshot.txt";
+const QString kBlankPath          = "fixtures/port/blank_v2.crochetcharts";
+const QString kBasicPath          = "fixtures/port/basic_v2.crochetcharts";
+const QString kBasicSnapshotPath  = "fixtures/port/basic_v2.snapshot.txt";
+const QString kLegacyPath         = "fixtures/port/legacy_v1.crochetcharts";
+const QString kLegacySnapshotPath = "fixtures/port/legacy_v1.snapshot.txt";
 
 int cellCount(Scene* scene)
 {
@@ -259,6 +261,106 @@ void TestFileFactory::roundTrip_basicV2_preservesSnapshot()
     QFile::remove(tmpPath);
     ff1.fileName = tmpPath;
     QCOMPARE(static_cast<int>(ff1.save(FileFactory::Version_1_2)),
+             static_cast<int>(FileFactory::No_Error));
+    QVERIFY(QFile::exists(tmpPath));
+
+    TestMW mw2;
+    FileFactory ff2(&mw2);
+    ff2.fileName = tmpPath;
+    QCOMPARE(static_cast<int>(ff2.load()), static_cast<int>(FileFactory::No_Error));
+    CrochetTab* tab2 = firstTab(mw2);
+    QVERIFY(tab2 != 0);
+    const QString dumpAfter = dumpScene(tab2->scene());
+
+    QCOMPARE(dumpAfter, dumpBefore);
+    QFile::remove(tmpPath);
+}
+
+void TestFileFactory::generateLegacyV1_ifMissing()
+{
+    if (QFile::exists(kLegacyPath)) {
+        QVERIFY2(QFileInfo(kLegacyPath).size() > 0,
+                 "legacy_v1.crochetcharts exists but is empty");
+        return;
+    }
+
+    TestMW mw;
+    CrochetTab* tab = mw.makeTab(Scene::Rows);
+    QVERIFY(tab != 0);
+    mw.tabs()->addTab(tab, "LegacyChart");
+    tab->createChart(Scene::Rows, 1, 3, "ch", QSizeF(32, 96), 0);
+
+    FileFactory ff(&mw);
+    ff.fileName = kLegacyPath;
+    FileFactory::FileError err = ff.save(FileFactory::Version_1_0);
+
+    QCOMPARE(static_cast<int>(err), static_cast<int>(FileFactory::No_Error));
+    QVERIFY(QFile::exists(kLegacyPath));
+    QVERIFY(QFileInfo(kLegacyPath).size() > 0);
+}
+
+void TestFileFactory::generateLegacyV1Snapshot_ifMissing()
+{
+    if (QFile::exists(kLegacySnapshotPath)) {
+        QVERIFY2(QFileInfo(kLegacySnapshotPath).size() > 0,
+                 "legacy_v1.snapshot.txt exists but is empty");
+        return;
+    }
+
+    QVERIFY(QFile::exists(kLegacyPath));
+
+    TestMW mw;
+    FileFactory ff(&mw);
+    ff.fileName = kLegacyPath;
+    QCOMPARE(static_cast<int>(ff.load()), static_cast<int>(FileFactory::No_Error));
+
+    CrochetTab* tab = firstTab(mw);
+    QVERIFY(tab != 0);
+
+    const QString dump = dumpScene(tab->scene());
+    QVERIFY2(writeText(kLegacySnapshotPath, dump),
+             qPrintable("failed to write " + kLegacySnapshotPath));
+    QVERIFY(QFileInfo(kLegacySnapshotPath).size() > 0);
+}
+
+void TestFileFactory::loadLegacyV1_preservesStructure()
+{
+    QVERIFY2(QFile::exists(kLegacyPath),
+             "legacy_v1.crochetcharts missing \u2014 run generateLegacyV1_ifMissing first");
+    QVERIFY2(QFile::exists(kLegacySnapshotPath),
+             "legacy_v1.snapshot.txt missing \u2014 run generateLegacyV1Snapshot_ifMissing first");
+
+    TestMW mw;
+    FileFactory ff(&mw);
+    ff.fileName = kLegacyPath;
+    QCOMPARE(static_cast<int>(ff.load()), static_cast<int>(FileFactory::No_Error));
+    QCOMPARE(mw.tabs()->count(), 1);
+
+    CrochetTab* tab = firstTab(mw);
+    QVERIFY(tab != 0);
+    QCOMPARE(cellCount(tab->scene()), 3);
+
+    const QString actual = dumpScene(tab->scene());
+    const QString expected = readText(kLegacySnapshotPath);
+    QCOMPARE(actual, expected);
+}
+
+void TestFileFactory::roundTrip_legacyV1_preservesSnapshot()
+{
+    QVERIFY(QFile::exists(kLegacyPath));
+
+    TestMW mw1;
+    FileFactory ff1(&mw1);
+    ff1.fileName = kLegacyPath;
+    QCOMPARE(static_cast<int>(ff1.load()), static_cast<int>(FileFactory::No_Error));
+    CrochetTab* tab1 = firstTab(mw1);
+    QVERIFY(tab1 != 0);
+    const QString dumpBefore = dumpScene(tab1->scene());
+
+    const QString tmpPath = QDir::tempPath() + "/legacy_v1_roundtrip.crochetcharts";
+    QFile::remove(tmpPath);
+    ff1.fileName = tmpPath;
+    QCOMPARE(static_cast<int>(ff1.save(FileFactory::Version_1_0)),
              static_cast<int>(FileFactory::No_Error));
     QVERIFY(QFile::exists(tmpPath));
 

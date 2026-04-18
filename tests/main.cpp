@@ -25,6 +25,7 @@
 #include "testtextview.h"
 #include "teststitchlibrary.h"
 #include "testfilefactory.h"
+#include "testchartview.h"
 
 int main(int argc, char** argv) 
 {
@@ -67,6 +68,11 @@ int main(int argc, char** argv)
     test = 0;
 
     test = new TestFileFactory();
+    retval +=QTest::qExec(test, argc, argv);
+    delete test;
+    test = 0;
+
+    test = new TestChartView();
     retval +=QTest::qExec(test, argc, argv);
     delete test;
     test = 0;
