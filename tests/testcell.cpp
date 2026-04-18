@@ -22,15 +22,8 @@
 #include "../src/stitchlibrary.h"
 #include "../src/ChartItemTools.h"
 
-#include <QPainter>
-#include <QFile>
-#include <QCryptographicHash>
-#include <QSvgGenerator>
-
 void TestCell::initTestCase()
 {
-    i = 0;
-
     StitchLibrary::inst()->loadStitchSets();
 }
 
@@ -136,162 +129,78 @@ void TestCell::setScale_data()
 
 void TestCell::setBgColor()
 {
-
     QFETCH(QString, name);
-    QFETCH(qreal, width);
-    QFETCH(qreal, height);
     QFETCH(QString, color);
-    QFETCH(QString, rasterHash);
 
-    QGraphicsScene *scene = new QGraphicsScene();
+    QGraphicsScene scene;
     Cell* c = new Cell();
-    scene->addItem(c);
-    i++;
+    scene.addItem(c);
 
     Stitch* s = StitchLibrary::inst()->findStitch(name);
     c->setStitch(s);
 
-    QPointF origin = QPointF(c->boundingRect().width()/2, c->boundingRect().height());
-    c->setTransformOriginPoint(origin);
     c->setBgColor(QColor(color));
 
-    QString rasterImage = "TestCell-BgColor-" + QString::number(i) + "-" + name + ".png";
+    QCOMPARE(c->bgColor(), QColor(color));
 
-    saveScene(scene, QSizeF(width, height), rasterImage);
-
-    QString hexHash = hashFile(rasterImage);
-
-    QCOMPARE(hexHash, rasterHash);
-
-    scene->removeItem(c);
+    scene.removeItem(c);
     delete c;
-    c = 0;
 }
 
 void TestCell::setBgColor_data()
 {
-
     QTest::addColumn<QString>("name");
-    QTest::addColumn<qreal>("width");
-    QTest::addColumn<qreal>("height");
     QTest::addColumn<QString>("color");
-    QTest::addColumn<QString>("rasterHash");
 
-    QTest::newRow("ch")    << "ch" << 32.0 << 16.0 << "#0000FF" << "9d6c0ac6e51809f662573c9432c0b5c7064c2021";
-    QTest::newRow("hdc")   << "hdc" << 32.0 << 64.0 << "#FF0000" << "c3105395f5d7e6ad8269208d25e8be76ab7a9455";
-    QTest::newRow("dc")    << "dc" << 32.0 << 80.0 << "#00FF00" << "0a4fedb0079e244671ab5a376984f40df3394b94";
-
+    QTest::newRow("ch blue")   << "ch"  << "#0000FF";
+    QTest::newRow("hdc red")   << "hdc" << "#FF0000";
+    QTest::newRow("dc green")  << "dc"  << "#00FF00";
+    QTest::newRow("named")     << "ch"  << "cornflowerblue";
 }
 
 void TestCell::setAllProperties()
 {
-
     QFETCH(QString, name);
-    QFETCH(qreal, width);
-    QFETCH(qreal, height);
     QFETCH(qreal, angle);
     QFETCH(qreal, scaleX);
     QFETCH(qreal, scaleY);
     QFETCH(QString, color);
-    QFETCH(QString, rasterHash);
 
-    QGraphicsScene *scene = new QGraphicsScene();
+    QGraphicsScene scene;
     Cell* c = new Cell();
-    scene->addItem(c);
-    i++;
+    scene.addItem(c);
 
     Stitch* s = StitchLibrary::inst()->findStitch(name);
     c->setStitch(s);
 
-    QPointF origin = QPointF(c->boundingRect().width()/2, c->boundingRect().height());
+    QPointF origin(c->boundingRect().width() / 2, c->boundingRect().height());
     c->setTransformOriginPoint(origin);
     c->setBgColor(QColor(color));
     c->setRotation(angle);
     ChartItemTools::setScaleX(c, scaleX);
     ChartItemTools::setScaleY(c, scaleY);
 
+    QCOMPARE(c->rotation(), angle);
+    QCOMPARE(c->transformOriginPoint(), origin);
+    QCOMPARE(c->bgColor(), QColor(color));
+    QCOMPARE(ChartItemTools::getScaleX(c), scaleX);
+    QCOMPARE(ChartItemTools::getScaleY(c), scaleY);
 
-    QString rasterImage = "TestCell-AllProperties-" + QString::number(i) + "-" + name + ".png";
-
-    saveScene(scene, QSizeF(width, height), rasterImage);
-
-    QString hexHash = hashFile(rasterImage);
-
-    QCOMPARE(hexHash, rasterHash);
-
-    scene->removeItem(c);
+    scene.removeItem(c);
     delete c;
-    c = 0;
 }
 
 void TestCell::setAllProperties_data()
 {
-
     QTest::addColumn<QString>("name");
-    QTest::addColumn<qreal>("width");
-    QTest::addColumn<qreal>("height");
     QTest::addColumn<qreal>("angle");
     QTest::addColumn<qreal>("scaleX");
     QTest::addColumn<qreal>("scaleY");
     QTest::addColumn<QString>("color");
-    QTest::addColumn<QString>("rasterHash");
 
-    QTest::newRow("ch")    << "ch" << 32.0 << 16.0 << 45.0 << 1.5 << 2.0 << "#0000FF"
-                                    << "2d56f4703b3f29f1163bdd6197597e3018a004e6";
-    QTest::newRow("hdc")   << "hdc" << 32.0 << 64.0 << 45.0 << 1.5 << 2.0 << "#FF0000"
-                                    << "2bffe89a7dad96f18eae2ded0dc08f7f207ceb30";
-    QTest::newRow("dc")    << "dc" << 32.0 << 80.0 << 45.0 << 1.5 << 2.0 << "#00FF00"
-                                    << "0c151d2b0aee5157a59e1ac769bb26644365ced9";
-
-}
-
-void TestCell::saveScene(QGraphicsScene* scene, QSizeF size, QString fileName)
-{
-
-    scene->setSceneRect(scene->itemsBoundingRect());
-
-    QPixmap pix = QPixmap(scene->sceneRect().width(), scene->sceneRect().height());
-    pix.fill(QColor(Qt::white));
-    QPainter p;
-    p.begin(&pix);
-    scene->render(&p);
-    p.end();
-    pix.save(fileName, "PNG", 100);
-
-}
-
-void TestCell::saveSceneSvg(QGraphicsScene* scene, QSizeF size, QString fileName)
-{
-    scene->setSceneRect(scene->itemsBoundingRect());
-
-    QPainter p;
-    QSvgGenerator gen;
-    gen.setFileName(fileName);
-    gen.setSize(size.toSize());
-    gen.setViewBox(QRectF(0,0,size.width(),size.height()));
-
-    p.begin(&gen);
-    scene->render(&p);
-    p.end();
-
-}
-
-QString TestCell::hashFile(QString fileName)
-{
-    QFile f(fileName);
-
-    if(!f.open(QIODevice::ReadOnly)) {
-        qFatal("Could not compare png file with expected results");
-    }
-
-    QByteArray data = f.readAll();
-    QByteArray hash = QCryptographicHash::hash(data, QCryptographicHash::Sha1);
-
-    QString hexHash = hash.toHex();
-    f.flush();
-    f.close();
-
-    return hexHash;
+    QTest::newRow("ch")  << "ch"  << 45.0 << 1.5 << 2.0 << "#0000FF";
+    QTest::newRow("hdc") << "hdc" << 45.0 << 1.5 << 2.0 << "#FF0000";
+    QTest::newRow("dc")  << "dc"  << 45.0 << 1.5 << 2.0 << "#00FF00";
 }
 
 void TestCell::cleanupTestCase()

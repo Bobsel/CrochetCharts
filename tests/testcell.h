@@ -53,15 +53,6 @@ private slots:
 
      void cleanupTestCase();
 
-private:
-     int i;
-     //Cell* mCell;
-
-     //QGraphicsScene* scene;
-
-     void saveScene(QGraphicsScene *scene, QSizeF size, QString fileName);
-     void saveSceneSvg(QGraphicsScene *scene, QSizeF size, QString fileName);
-     QString hashFile(QString fileName);
 };
 
 #endif // TESTCELL_H
