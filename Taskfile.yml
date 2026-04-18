@@ -4,6 +4,7 @@ vars:
   BUILD_DIR: build
   BUILD_DIR_RELEASE: build_release
   BUILD_DIR_PROFILE: build_profile
+  BUILD_DIR_DOCS: build_docs
   NPROC:
     sh: nproc
 
@@ -83,7 +84,28 @@ tasks:
   clean:
     desc: Remove all build artifacts
     cmds:
-      - rm -rf {{.BUILD_DIR}} {{.BUILD_DIR_RELEASE}} {{.BUILD_DIR_PROFILE}}
+      - rm -rf {{.BUILD_DIR}} {{.BUILD_DIR_RELEASE}} {{.BUILD_DIR_PROFILE}} {{.BUILD_DIR_DOCS}}
+
+  docs:
+    desc: Build the end-user manual (HTML + PDF) via DocBook + xsltproc + FOP
+    cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR_DOCS}}'}
+      - mkdir -p {{.BUILD_DIR_DOCS}}
+      # DocbookGen.cmake runs xsltproc/fop via execute_process at configure
+      # time, so a single cmake invocation produces the manual. No `make` needed.
+      - cd {{.BUILD_DIR_DOCS}} && cmake .. -DCMAKE_BUILD_TYPE=Release -DDOCS=ON -Wno-dev
+      - |
+        echo
+        echo "Manual written:"
+        echo "  HTML: {{.BUILD_DIR_DOCS}}/docs/html/index.html"
+        echo "  PDF:  {{.BUILD_DIR_DOCS}}/docs/pdf/"
+        ls -1 {{.BUILD_DIR_DOCS}}/docs/pdf/*.pdf 2>/dev/null | sed 's|^|        |'
+
+  docs:clean:
+    desc: Remove docs build artifacts only
+    cmds:
+      - rm -rf {{.BUILD_DIR_DOCS}}
 
   setup:
     desc: Install git hooks

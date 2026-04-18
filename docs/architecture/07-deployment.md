@@ -29,6 +29,7 @@ flowchart LR
 - `ppa:git-core/ppa` — current git (2.50) instead of the 2.17 Bionic ships with. See ADR-02.
 - Non-root `vscode` user with UID/GID 1000 and passwordless sudo. Matches the typical host user so bind-mount writes land with the correct owner. See ADR-03.
 - Task runner (`taskfile.dev`) installed from upstream script.
+- DocBook toolchain: `xsltproc`, `fop`, `docbook-xsl`, `docbook-xsl-ns`. Enables `task docs` to build the end-user manual without leaving the container. See ADR-10.
 
 **X11 forwarding:** `.devcontainer/devcontainer.json` passes `--net=host`, `-e DISPLAY=$DISPLAY`, and `-v /tmp/.X11-unix:/tmp/.X11-unix`. Host must run `xhost +local:` once per session.
 
@@ -41,7 +42,9 @@ flowchart LR
 | `task run` | Deps: `build`; launches `./build/src/CrochetCharts` |
 | `task test` | Configures `-DUNIT_TESTING=ON`, builds, runs `build/tests/tests` under `xvfb-run` if available |
 | `task profile` | Profile build, runs app under gprof, emits `profile.png` via `gprof2dot` |
-| `task clean` | Removes all `build*` directories |
+| `task docs` | Build HTML + PDF of the end-user manual into `build_docs/docs/{html,pdf}/`. Uses xsltproc + FOP via `DocbookGen.cmake` at cmake-configure time; no `make` step required. |
+| `task docs:clean` | Remove `build_docs/` only |
+| `task clean` | Removes all `build*` directories (incl. `build_docs`) |
 | `task setup` | Installs git hooks from `utils/hooks/` |
 | `task _clear-stale-cache` | Internal: wipes `build/` if `CMAKE_HOME_DIRECTORY` in `CMakeCache.txt` no longer matches CWD |
 

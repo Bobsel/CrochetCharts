@@ -99,7 +99,8 @@ Format: `ID · title · status · context · decision · consequences`.
 
 - **Status:** Accepted, lightly maintained.
 - **Context:** `docs/index.docbook.in` produces HTML/PDF/Pages.
-- **Decision:** Keep DocBook. Not auto-built; opt-in via `-DDOCS=ON`, requires `xsltproc` + Apache FOP + docbook-xsl on the build host.
+- **Decision:** Keep DocBook. Opt-in via `-DDOCS=ON`; requires `xsltproc` + Apache FOP + `docbook-xsl-ns` on the build host. `DocbookGen.cmake` invokes the tools via `execute_process()` during cmake configure, so a single `cmake -DDOCS=ON` produces the manual — no `make` step.
 - **Consequences:**
   - End-user manual stays versioned with the code.
   - Toolchain is arcane; new maintainers tend not to update the manual. Revisit if manual drifts badly.
+  - The dev container bundles `xsltproc`, `fop`, `docbook-xsl`, `docbook-xsl-ns` so `task docs` works out of the box (2026-04 onward). Adds ~200 MB to the image (JRE for FOP) but removes a friction point for contributors.
