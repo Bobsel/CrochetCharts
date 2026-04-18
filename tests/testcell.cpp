@@ -20,6 +20,7 @@
  \****************************************************************************/
 #include "testcell.h"
 #include "../src/stitchlibrary.h"
+#include "../src/ChartItemTools.h"
 
 #include <QPainter>
 #include <QFile>
@@ -133,7 +134,8 @@ void TestCell::setScale()
 
     QPointF origin = QPointF(c->boundingRect().width()/2, c->boundingRect().height());
     c->setTransformOriginPoint(origin);
-    c->setScale(scaleX, scaleY);
+    ChartItemTools::setScaleX(c, scaleX);
+    ChartItemTools::setScaleY(c, scaleY);
 
     QString rasterImage = "TestCell-ScaleTest-" + QString::number(i) + "-" + name + ".png";
 
