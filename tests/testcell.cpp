@@ -238,7 +238,8 @@ void TestCell::setAllProperties()
     c->setTransformOriginPoint(origin);
     c->setBgColor(QColor(color));
     c->setRotation(angle);
-    c->setScale(scaleX, scaleY);
+    ChartItemTools::setScaleX(c, scaleX);
+    ChartItemTools::setScaleY(c, scaleY);
 
 
     QString rasterImage = "TestCell-AllProperties-" + QString::number(i) + "-" + name + ".png";
