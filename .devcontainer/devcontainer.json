@@ -3,6 +3,8 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=delegated",
   "runArgs": [
     "--net=host",
     "-e", "DISPLAY=${localEnv:DISPLAY}",
@@ -17,5 +19,5 @@
       ]
     }
   },
-  "postCreateCommand": "mkdir -p /workspaces/CrochetCharts/build"
+  "postCreateCommand": "mkdir -p /workspaces/${localWorkspaceFolderBasename}/build"
 }
