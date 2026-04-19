@@ -24,6 +24,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fop \
     docbook-xsl \
     docbook-xsl-ns \
+    rpm \
+    file \
+    inkscape \
     && rm -rf /var/lib/apt/lists/*
 
 RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin

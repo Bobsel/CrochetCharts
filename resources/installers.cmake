@@ -53,7 +53,11 @@ ENDIF(WIN32)
 
 if(WIN32)
     set(CPACK_MONOLITHIC_INSTALL 1)
-    set(CPACK_PACKAGE_ICON "C:\\\\Documents and Settings\\\\Brian Milco\\\\My Documents\\\\crochet.git\\\\images\\\\installer.bmp")
+    # NSIS expects a BMP header image shipped with the repo.
+    # CMake needs backslash-escaped Windows-style paths here (double-escaped
+    # because CMake also consumes backslashes), so convert the source path.
+    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/images/installer.bmp" _INSTALLER_BMP)
+    string(REPLACE "\\" "\\\\" CPACK_PACKAGE_ICON "${_INSTALLER_BMP}")
     set(CPACK_GENERATOR "NSIS")
     #
     #set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")

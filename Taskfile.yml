@@ -5,10 +5,37 @@ vars:
   BUILD_DIR_RELEASE: build_release
   BUILD_DIR_PROFILE: build_profile
   BUILD_DIR_DOCS: build_docs
+  BUILD_DIR_PKG: build_pkg
+  BUILD_DIR_WIN: build_win
+  ARTIFACTS_DIR: artifacts
+  WIN_IMAGE: crochet-win-build
   NPROC:
     sh: nproc
 
 tasks:
+  _generate-icons:
+    internal: true
+    vars:
+      BUILD_DIR: '{{.BUILD_DIR | default "build_pkg"}}'
+      SIZES: "16 32 48 64 96 128 192 256 512"
+      FILES: "CrochetCharts stitchworks-pattern"
+    cmds:
+      - mkdir -p "{{.BUILD_DIR}}/icons"
+      - |
+        # Tries Inkscape 1.x flags first, falls back to 0.9x. Required because
+        # installers.cmake unconditionally installs build_pkg/icons into the
+        # Linux package.
+        for file in {{.FILES}}; do
+          for size in {{.SIZES}}; do
+            out="{{.BUILD_DIR}}/icons/${file}-${size}.png"
+            src="images/${file}.svg"
+            inkscape --export-type=png --export-width=$size --export-height=$size \
+                     --export-filename="$out" "$src" >/dev/null 2>&1 \
+              || inkscape -z --export-width=$size --export-height=$size \
+                          --export-png="$out" "$src" >/dev/null 2>&1
+          done
+        done
+
   _clear-stale-cache:
     internal: true
     # CMake bakes absolute paths (CMAKE_HOME_DIRECTORY) into CMakeCache.txt.
@@ -84,7 +111,60 @@ tasks:
   clean:
     desc: Remove all build artifacts
     cmds:
-      - rm -rf {{.BUILD_DIR}} {{.BUILD_DIR_RELEASE}} {{.BUILD_DIR_PROFILE}} {{.BUILD_DIR_DOCS}}
+      - rm -rf {{.BUILD_DIR}} {{.BUILD_DIR_RELEASE}} {{.BUILD_DIR_PROFILE}} {{.BUILD_DIR_DOCS}} {{.BUILD_DIR_PKG}} {{.BUILD_DIR_WIN}} {{.ARTIFACTS_DIR}}
+
+  package:linux:
+    desc: Build Release + .deb/.rpm (run INSIDE the Linux devcontainer)
+    cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR_PKG}}'}
+      - mkdir -p {{.BUILD_DIR_PKG}} {{.ARTIFACTS_DIR}}
+      - cd {{.BUILD_DIR_PKG}} && cmake .. -DCMAKE_BUILD_TYPE=Release -DDOCS=ON -DAMD64=ON -Wno-dev
+      - cd {{.BUILD_DIR_PKG}} && make -j{{.NPROC}}
+      - task: _generate-icons
+        vars: {BUILD_DIR: '{{.BUILD_DIR_PKG}}'}
+      - cd {{.BUILD_DIR_PKG}} && cpack
+      - |
+        shopt -s nullglob
+        for f in {{.BUILD_DIR_PKG}}/*.deb {{.BUILD_DIR_PKG}}/*.rpm; do
+          cp -v "$f" {{.ARTIFACTS_DIR}}/
+        done
+      - ls -la {{.ARTIFACTS_DIR}}/
+
+  images:build:win:
+    desc: Build the MXE Windows cross-compile Docker image (run on the HOST, ~30-60 min first time)
+    cmds:
+      - docker build -f .devcontainer/win/Dockerfile
+          --build-arg USER_UID=$(id -u)
+          --build-arg USER_GID=$(id -g)
+          -t {{.WIN_IMAGE}} .devcontainer/win/
+
+  package:win:
+    desc: Cross-compile Windows NSIS installer (run on the HOST; requires {{.WIN_IMAGE}} image)
+    cmds:
+      - mkdir -p {{.ARTIFACTS_DIR}}
+      - docker run --rm -v "$PWD:/src" -w /src {{.WIN_IMAGE}} task package:win:inner
+      - ls -la {{.ARTIFACTS_DIR}}/
+
+  package:win:inner:
+    desc: Executed inside the MXE container by `task package:win` — not useful to invoke directly
+    cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR_WIN}}'}
+      - mkdir -p {{.BUILD_DIR_WIN}} {{.ARTIFACTS_DIR}}
+      - cd {{.BUILD_DIR_WIN}} && x86_64-w64-mingw32.static-cmake .. -DCMAKE_BUILD_TYPE=Release -Wno-dev
+      - cd {{.BUILD_DIR_WIN}} && make -j{{.NPROC}}
+      - cd {{.BUILD_DIR_WIN}} && cpack -G NSIS
+      - |
+        shopt -s nullglob
+        for f in {{.BUILD_DIR_WIN}}/*.exe; do
+          cp -v "$f" {{.ARTIFACTS_DIR}}/
+        done
+
+  artifacts:clean:
+    desc: Remove ./artifacts and the package build dirs
+    cmds:
+      - rm -rf {{.ARTIFACTS_DIR}} {{.BUILD_DIR_PKG}} {{.BUILD_DIR_WIN}}
 
   docs:
     desc: Build the end-user manual (HTML + PDF) via DocBook + xsltproc + FOP

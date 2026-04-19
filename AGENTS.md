@@ -119,7 +119,7 @@ Sync rules, trigger table, and workflow live in the `arc42-sync` skill at `.agen
 
 - **`scene.cpp` (3626 lines, 142 methods) is a god object** — do not add more logic here. New canvas behavior: consider extracting a helper class.
 - **`mainwindow.cpp` (2043 lines, 116 methods, 32 includes)** is a secondary hub. Adding a new dock/dialog: keep the wiring minimal here.
-- **Hardcoded Windows paths** in `src/CMakeLists.txt`: `C://qt//4.8.5//bin`, `C://MinGW-4.4//bin`. Do not use as reference — patch locally if needed.
+- **Windows DLL bundling** in `src/CMakeLists.txt` is gated by the `BUNDLE_QT_DLLS` option (default ON for native Windows / shared Qt, OFF when `CMAKE_CROSSCOMPILING` is set — MXE static target needs no DLLs). Override `MINGW_BIN_DIR` via `-D` if you want MinGW runtime DLLs bundled on a native Windows build. The old hardcoded `C://qt//4.8.5//bin` / `C://MinGW-4.4//bin` paths were removed; do not reintroduce them.
 - **`QString *data = new QString(); … delete data;`** pattern in `file_v1.cpp:115`, `file_v2.cpp:108`, `stitchset.cpp:273,314`. Use stack-allocated `QString` instead.
 - **`//TODO transform_refactor`** markers in `scene.cpp` signal an incomplete refactor — inherit the intent when touching nearby code.
 - **Known FIXMEs worth reading before touching**:
@@ -139,8 +139,14 @@ task build:release  # Release
 task test           # Builds with -DUNIT_TESTING=ON, runs build/tests/tests
 task run            # Build and launch
 task profile        # Profile build + gprof + dot → profile.png
-task clean          # Remove build/, build_release/, build_profile/
+task clean          # Remove build/, build_release/, build_profile/, build_pkg/, build_win/, artifacts/
 task setup          # Install git hooks (cp utils/hooks/* .git/hooks/)
+
+# Packaging (see README.md > "Building installers")
+task package:linux      # INSIDE Linux devcontainer: Release + .deb + .rpm → ./artifacts/
+task images:build:win   # HOST one-time: build MXE + Qt4 + NSIS image (30-60 min)
+task package:win        # HOST: cross-compile NSIS installer → ./artifacts/
+task artifacts:clean    # rm -rf artifacts/ build_pkg/ build_win/
 
 # Legacy (still functional)
 ./bin/build [-t] [debug|release|installer]  # -t = include tests
