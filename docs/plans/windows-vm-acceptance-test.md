@@ -62,9 +62,14 @@ Save to `~/ISOs/Win11_Eval.iso` (any path works — referenced below).
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y virt-manager qemu-kvm libvirt-daemon-system bridge-utils \
-                         ovmf                       # UEFI firmware (Win11 requires it)
+sudo apt-get install -y virt-manager qemu-kvm libvirt-daemon-system libvirt-clients \
+                        bridge-utils \
+                        ovmf \
+                        swtpm swtpm-tools \
+                        virt-viewer
 ```
+
+> **Note on `virtiofsd`:** Ubuntu jammy (22.04) does **not** ship `virtiofsd` as a standalone package — it lives inside `qemu-system-common` at `/usr/lib/qemu/virtiofsd` (pulled in transitively by `qemu-kvm`). Newer Debian/Ubuntu releases split it out as a separate apt package. If you adapt this for a 24.04+ host, add `virtiofsd` to the apt list. UEFI firmware (`ovmf`) is required because Win11 boots EFI; TPM emulation (`swtpm`+`swtpm-tools`) because Win11 requires TPM 2.0.
 
 ### 3.2 Add your user to the virt groups
 

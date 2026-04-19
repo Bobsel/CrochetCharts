@@ -15,7 +15,6 @@ PACKAGES=(
     ovmf
     swtpm
     swtpm-tools
-    virtiofsd
     virt-viewer
 )
 
@@ -24,6 +23,15 @@ TARGET_USER="${SUDO_USER:-$USER}"
 echo "==> apt update + install ${#PACKAGES[@]} packages"
 apt-get update -q
 apt-get install -y "${PACKAGES[@]}"
+
+# virtiofsd has no standalone package on Ubuntu jammy; it ships inside
+# qemu-system-common (pulled in by qemu-kvm) at /usr/lib/qemu/virtiofsd.
+# Verify it's there so vm-share-artifacts.sh doesn't fail later with a
+# confusing libvirt error.
+if [[ ! -x /usr/lib/qemu/virtiofsd && ! -x /usr/libexec/virtiofsd && -z "$(command -v virtiofsd)" ]]; then
+    echo "WARNING: virtiofsd binary not found. virtiofs share won't work." >&2
+    echo "         Expected at /usr/lib/qemu/virtiofsd (from qemu-system-common)." >&2
+fi
 
 echo "==> adding $TARGET_USER to libvirt,kvm"
 usermod -aG libvirt,kvm "$TARGET_USER"
