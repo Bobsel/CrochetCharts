@@ -309,7 +309,46 @@ listed; each step depends on the previous one not failing.
      package).
 - Document which path you picked in a follow-up plan.
 
-## 9. Future work
+## 9. Automation scripts
+
+The inline commands in sections 3-5 are wrapped in four helper scripts under
+`docs/plans/scripts/`. Run them in this order:
+
+| Script | When | Needs sudo | What it does |
+|--------|------|------------|--------------|
+| `kvm-host-setup.sh` | once | yes (auto `exec sudo`) | apt install all packages, add you to `libvirt` + `kvm`, enable `libvirtd`, create `~/ISOs/` |
+| `vm-create-win11.sh` | once | no | `virt-install` with UEFI + TPM 2.0 + host-passthrough CPU + memfd shared memory (for virtiofs) |
+| `vm-share-artifacts.sh` | once, after VM created | no | attach `./artifacts/` as virtiofs share named `crochet-artifacts` |
+| `vm-snapshot.sh create\|revert\|list\|delete` | on demand | no | manage the `clean-install` snapshot |
+
+Environment overrides (defaults in parens): `VM_NAME` (`crochet-win11-test`),
+`ISO_PATH` (`~/ISOs/Win11_Eval.iso`), `MEMORY_MB` (4096), `VCPUS` (4),
+`DISK_GB` (40), `SNAPSHOT_NAME` (`clean-install`),
+`SHARE_DIR` (`<repo>/artifacts`), `TAG` (`crochet-artifacts`).
+
+### Flow from zero to test-ready
+
+```bash
+# on host, repo root
+docs/plans/scripts/kvm-host-setup.sh       # prompts for sudo password
+# log out / log in so group membership takes effect
+# download Win11_Eval.iso into ~/ISOs/
+docs/plans/scripts/vm-create-win11.sh
+# walk through Windows 11 installer in virt-viewer (~30 min)
+# install virtio-win guest tools + WinFsp inside the VM
+docs/plans/scripts/vm-share-artifacts.sh
+docs/plans/scripts/vm-snapshot.sh create
+```
+
+For each release candidate afterwards:
+
+```bash
+docs/plans/scripts/vm-snapshot.sh revert   # back to clean Windows
+docker run --rm -v "$PWD:/src" -w /src crochet-win-build task package:win:inner
+# install + run CrochetCharts-<ver>-win64.exe inside the VM per §6 checklist
+```
+
+## 10. Future work
 
 - **Automate smoke-test** with `winrm` or `psexec` driving the VM from the
   host (install + launch + screenshot + diff). Enables CI without a Windows
