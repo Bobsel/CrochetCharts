@@ -42,7 +42,7 @@ Each scenario is stated as: *stimulus · environment · response · measure*.
 - **Stimulus:** User opens a `v1` or `v2` file, makes no edits, saves.
 - **Environment:** Any supported OS.
 - **Response:** The resulting file produces an identical in-memory chart when reopened.
-- **Measure:** `tests/filetest.cpp` must contain a round-trip test per persisted field. Failure = regression.
+- **Measure:** `tests/testfilefactory.cpp` must contain a round-trip test per persisted field. Failure = regression.
 
 ### QS-2 · Save latency for a typical chart
 - **Stimulus:** User hits Save on a chart of 500 cells, 20 indicators, 5 images.

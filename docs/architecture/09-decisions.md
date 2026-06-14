@@ -63,7 +63,7 @@ Format: `ID · title · status · context · decision · consequences`.
 - **Decision:** Declare `friend class File_v1/v2/FileFactory/SaveFile` on those data classes. Serializers read/write private fields directly.
 - **Consequences:**
   - Tight but explicit coupling between serializer and data layout. Adding a field is one line on the class and one line in the serializer.
-  - Refactoring a data class can break serialization silently. Tests in `tests/filetest.cpp` are the safety net — expand them when adding fields.
+  - Refactoring a data class can break serialization silently. Tests in `tests/testfilefactory.cpp` are the safety net — expand them when adding fields.
 
 ## ADR-07 · Qt resource system for built-in stitches
 

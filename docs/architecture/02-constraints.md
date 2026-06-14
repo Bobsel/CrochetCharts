@@ -19,7 +19,7 @@ Hard boundaries that cannot be relaxed without a major rewrite.
 |---|---|---|
 | **GPLv3 code, CC BY-SA 4.0 art** | `LICENSE`, `README.md` | Derivative works must be GPL-compatible. Bundled libraries must be compatible or dynamically linked. |
 | **Feature freeze; maintenance mode** | Git history (sparse since 2014) | Large refactors without user-visible benefit are discouraged. |
-| **No CI infrastructure** | Absence of `.github/`, `.gitlab/` | Validation is manual via `task test`. See [07-deployment.md](07-deployment.md). |
+| **Linux-only CI** | `.github/workflows/build.yml` builds + tests in the Bionic devcontainer; Windows / macOS not exercised in CI. | Windows / macOS regressions caught only by manual `task package:*` runs. See [07-deployment.md](07-deployment.md). |
 
 ## 2.3 Conventions
 

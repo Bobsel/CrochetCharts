@@ -8,7 +8,7 @@ Known, unresolved issues. Each entry: impact, likelihood, remediation sketch. Cr
 |---|------|--------|------------|-------------|
 | R-1 | **Qt 4 is EOL** and unbuildable on modern Linux distros. | High — future packaging and security updates are blocked. | Certain over time. | Full port to Qt 5 or 6 (ADR-01). Large effort. Not currently planned. |
 | R-2 | **Test coverage ≈ 5 %.** | Medium — regressions slip through `Scene`, docks, export. | High whenever Scene/docks are touched. | Add tests per quality scenario (§ 10.2). Start with file round-trip, indicator undo, and mode transitions. |
-| R-3 | **No CI.** Validation is manual via `task test`. | Medium — merges can break targets that the author did not run. | Medium on every cross-platform change. | Add a GitHub Actions job that at minimum builds + runs tests on Ubuntu 18.04. |
+| R-3 | **Linux-only CI.** `.github/workflows/build.yml` runs build + tests on every push / PR in the Bionic devcontainer (added 2026-06). Windows (MXE cross-compile) and macOS are still validated only by manual `task package:*` runs. | Medium — Windows / macOS regressions slip through; Linux is covered. | Medium on every cross-platform change. | Extend the workflow with a Windows job (reuse `.devcontainer/win/Dockerfile`) and a macOS job. |
 | R-4 | **No macOS notarization, no Windows code-signing.** | Medium — end-user friction (Gatekeeper / SmartScreen). | Certain on fresh installs. | Extend `resources/installers.cmake` with notarize + signtool steps; provision certs. |
 | R-5 | **Update channel** (`src/updater.cpp`) points at an HTTP endpoint; it has a known crash on cancel. | Low — updater is opt-in; most users never enable it. | Low. | Fix cancel path (see `updater.cpp:168`), switch to HTTPS, or remove updater altogether. |
 
@@ -43,7 +43,7 @@ Sorted by expected payoff per hour of work:
 1. **D-3 + D-4** — trivial, mechanical fixes. Half-day. Eliminates known leaks.
 2. **R-2 / Quality scenarios** — add file round-trip and undo symmetry tests. Multi-day but high leverage.
 3. **D-11 known FIXMEs** — targeted bug fixes in code the user already hits.
-4. **R-3 / CI** — one Dockerfile-based GitHub Actions job. Prevents cross-platform regressions.
+4. **R-3 / Windows + macOS CI** — Linux done (`.github/workflows/build.yml`); extend with a Windows MXE job and a macOS job to catch cross-platform regressions.
 5. **D-1 / `Scene` extraction** — ongoing. Extract one mode at a time into a helper; don't attempt a grand refactor.
 
 Everything below that point is low impact relative to the cost of getting Qt 4 to keep working at all (R-1).

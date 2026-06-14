@@ -30,7 +30,7 @@ These simplifications are the reason a solo maintainer can still navigate the co
 
 | Quality goal (from § 1.3) | Strategy element |
 |---|---|
-| Correctness of saved files | S4 (versioned + frozen past versions), plus test class `FileTest` |
+| Correctness of saved files | S4 (versioned + frozen past versions), plus test class `TestFileFactory` (v1 + v2 round-trip oracle) |
 | Interactive responsiveness | S1 (Qt scene graph hit-testing), S8 (no IPC overhead) |
 | Cross-platform parity | S6 (embedded assets), S7 (CPack), Qt4 abstraction |
 | Installability by non-tech users | S7 (platform-native installers with icons, MIME, desktop files) |

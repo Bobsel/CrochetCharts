@@ -13,7 +13,7 @@ Desktop crochet chart editor. Qt 4.8 + C++11 (gnu++11), CMake build, QGraphicsSc
 ```
 CrochetCharts/
 ├── src/            # 99 .cpp/.h + 14 .ui — flat (no subdirs). See src/AGENTS.md
-├── tests/          # QtTest — 6 test classes, ~5% coverage. See tests/AGENTS.md
+├── tests/          # QtTest — 8 test classes, ~5% coverage. See tests/AGENTS.md
 ├── stitches/       # 129 SVG stitch icons + stitches.qrc. See stitches/AGENTS.md
 ├── cmake/modules/  # FindHunSpell, GetGitRevisionDescription, DocbookGen, NSIS template, version.cpp.in
 ├── images/         # Toolbar icons + macOS .iconset bundles (Crochet Charts.iconset, PatternDocument.iconset)
@@ -128,7 +128,7 @@ Sync rules, trigger table, and workflow live in the `arc42-sync` skill at `.agen
   - `mainwindow.cpp:955` — fileSave cancel still closes window
   - `updater.cpp:168` — crash on cancel
 - **No Qt5/Qt6 port**: `find_package(Qt4 REQUIRED)` is mandatory. Installing Qt5-only distros breaks build.
-- **Test coverage ~5%**: 6 test classes for ~100 app classes. Do not assume tests will catch regressions.
+- **Test coverage ~5%**: 8 test classes for ~100 app classes. Do not assume tests will catch regressions.
 
 ## COMMANDS
 

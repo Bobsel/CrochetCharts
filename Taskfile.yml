@@ -125,8 +125,12 @@ tasks:
         vars: {BUILD_DIR: '{{.BUILD_DIR_PKG}}'}
       - cd {{.BUILD_DIR_PKG}} && cpack
       - |
-        shopt -s nullglob
+        # POSIX-safe no-match handling: go-task runs commands via /bin/sh,
+        # which on Debian/Ubuntu is dash — `shopt -s nullglob` would fail
+        # there. Unset globs expand to their literal pattern, so guard
+        # each iteration with an existence test.
         for f in {{.BUILD_DIR_PKG}}/*.deb {{.BUILD_DIR_PKG}}/*.rpm; do
+          [ -e "$f" ] || continue
           cp -v "$f" {{.ARTIFACTS_DIR}}/
         done
       - ls -la {{.ARTIFACTS_DIR}}/
@@ -156,8 +160,9 @@ tasks:
       - cd {{.BUILD_DIR_WIN}} && make -j{{.NPROC}}
       - cd {{.BUILD_DIR_WIN}} && cpack -G NSIS
       - |
-        shopt -s nullglob
+        # POSIX-safe no-match handling — see comment in package:linux.
         for f in {{.BUILD_DIR_WIN}}/*.exe; do
+          [ -e "$f" ] || continue
           cp -v "$f" {{.ARTIFACTS_DIR}}/
         done
 

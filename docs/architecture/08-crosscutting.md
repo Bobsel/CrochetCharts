@@ -34,7 +34,7 @@ The versioned file classes (`File_v1`, `File_v2`, `SaveFile`, `FileFactory`) dec
 Pros: no ceremony for new fields — add a private member and touch `File_vN`.
 Cons: encapsulation is effectively zero for these classes; every serializer is a transitive dependency on every data class it touches.
 
-**When adding a new persisted field:** update both `File_v2` (write + read) *and* the relevant test in `tests/filetest.cpp`. Do not edit `File_v1` — it is frozen for backwards compatibility.
+**When adding a new persisted field:** update both `File_v2` (write + read) *and* the relevant test in `tests/testfilefactory.cpp`. Do not edit `File_v1` — it is frozen for backwards compatibility.
 
 See the subsection below for the on-disk shape.
 
