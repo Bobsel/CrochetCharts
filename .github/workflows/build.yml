@@ -2,7 +2,13 @@ name: build
 
 on:
   push:
-    branches: [master, upgrade]
+    # Only master triggers push-event CI. Feature/integration branches
+    # are covered by the `pull_request:` trigger below as soon as a PR
+    # is opened; keeping them in this list would just duplicate every
+    # PR-branch push into two parallel runs (one push, one PR), since
+    # `concurrency` uses `github.ref` and the two events have different
+    # refs (`refs/heads/<branch>` vs `refs/pull/<n>/merge`).
+    branches: [master]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
