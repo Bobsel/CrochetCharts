@@ -112,7 +112,6 @@ Sync rules, trigger table, and workflow live in the `arc42-sync` skill at `.agen
 
     This file is part of Crochet Charts.
   ```
-  Full rationale and GPLv3 §5a reference: `docs/plans/license-copyright-and-rename.md`.
 - **File headers — who adds a copyright line**: per-file copyright lines are scoped to the fork's maintainer(s). The "modified existing files" rule above applies to maintainers only — drive-by and occasional contributors do **not** add per-file lines. They are credited via git history (and an `AUTHORS` file, when one is added); their copyright is still legally theirs. A recurring contributor may be added to a file header when they take structural ownership of a subsystem, decided case-by-case. Recommended (not yet enforced): a `Signed-off-by: Name <email>` line in each commit (DCO, Linux-kernel style) as the contributor's assertion that they may submit the change under GPLv3.
 
 ## ANTI-PATTERNS (THIS PROJECT)
