@@ -4,7 +4,7 @@ Patterns applied in more than one place. Understand these once; they recur.
 
 ## 8.1 Undo via Command Pattern
 
-Every mutating user action funnels through a `QUndoCommand` subclass. `src/crochetchartcommands.h` defines ≈ 18 of them (e.g. `SetCellStitch`, `SetCellRotation`, `MoveCells`, `AddItem`, `RemoveItem`, `GroupItems`, `UngroupItems`). Indicator mutations have a parallel set in `src/indicatorundo.{cpp,h}`.
+Every mutating user action funnels through a `QUndoCommand` subclass. `src/crochetchartcommands.h` defines 21 of them (e.g. `SetCellStitch`, `SetItemRotation`, `SetItemCoordinates`, `AddItem`, `RemoveItem`, `GroupItems`, `UngroupItems`, plus a `SetLayer*` family). Indicator mutations have a parallel set of 3 in `src/indicatorundo.{cpp,h}` (`AddIndicator`, `RemoveIndicator`, `ChangeTextIndicator`).
 
 Rules:
 - **No direct Scene mutation.** If the user can undo it, it goes through a command.
@@ -55,7 +55,7 @@ See the subsection below for the on-disk shape.
 
 Two `.qrc` files:
 - `crochet.qrc` — UI chrome: toolbar icons, splash, watermark, `license.txt`, `crochet.xml`. Prefix `/`.
-- `stitches/stitches.qrc` — 131 stitch SVGs. Prefix `/stitches`.
+- `stitches/stitches.qrc` — 129 stitch SVGs. Prefix `/stitches`.
 
 Consequences:
 - Built-in stitches are **compiled in** — modifying an SVG requires a rebuild.
@@ -64,7 +64,7 @@ Consequences:
 
 ## 8.5 Mode-based Interaction
 
-`Scene::mMode` selects behaviour for mouse and keyboard events. Modes are effectively sub-tools: `StitchMode`, `RotateMode`, `ScaleMode`, `InsertMode`, `ColorMode`, `RowEditMode`, etc. See `scene.h`.
+`Scene::mMode` (type `Scene::EditMode`) selects behaviour for mouse and keyboard events. Modes are effectively sub-tools: `StitchEdit`, `ColorEdit`, `RowEdit`, `RotationEdit`, `ScaleEdit`, `IndicatorEdit`. See `src/scene.h:118-125`. A separate `Scene::SelectMode` (`BoxSelect`, `LassoSelect`, `LineSelect`) further refines selection behaviour and is held in `mSelectMode`.
 
 **Pros:** one class handles all interaction, consistent selection semantics.
 **Cons:** `Scene::mousePressEvent` is a multi-branch `switch` that grows with each mode. This is the main reason `scene.cpp` is a god class.
@@ -98,7 +98,7 @@ There is no framework. The code uses raw `qDebug()` / `qWarning()` calls, which 
 
 ## 8.10 Testing
 
-`QtTest`-based unit tests under `tests/` cover a thin slice: `cell`, `stitchset`, `file`, a handful of geometry helpers. Coverage is ≈ 5 %. Tests run headless under `xvfb-run` in the dev container.
+`QtTest`-based unit tests under `tests/` cover a thin slice: 8 `QObject` test classes — `TestCell`, `TestStitch`, `TestStitchSet`, `TestStitchLibrary`, `TestSettings`, `TestTextView`, `TestChartView`, `TestFileFactory`. The last two are port-regression fixtures (Qt4-frozen golden masters) intended to catch binary-format breakage during a future Qt5/6 port. Coverage is ≈ 5 %. Tests run headless under `xvfb-run` in the dev container.
 
 - Tests are **not** a reliable regression net. Changes to `Scene`, docks, or dialogs rarely have a failing test before the bug is reported.
 - Generated test artifacts (PNG diffs, `.set` roundtrips) are git-ignored; see `tests/.gitignore`.

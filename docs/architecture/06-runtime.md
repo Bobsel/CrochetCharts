@@ -74,7 +74,7 @@ sequenceDiagram
 
     User->>View: click on canvas
     View->>Scene: mousePressEvent
-    Scene->>Scene: branch on mMode == StitchMode
+    Scene->>Scene: branch on mMode == StitchEdit
     Scene->>Cmd: new AddCell(scene, stitch, pos)
     Scene->>Undo: push(cmd)
     Undo->>Cmd: redo()  (first push executes)

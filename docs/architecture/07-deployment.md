@@ -101,9 +101,20 @@ The app assumes:
 
 There is no uninstall script beyond what the native installer handles. Removing the binary leaves `QSettings` data and the user stitch set directory intact by design.
 
-## 7.4 Deployment risks
+## 7.4 On-demand Docker packaging (2026-04)
 
-- **Qt4 is unavailable** on modern distros. Linux DEB/RPM installs on Ubuntu ≥ 20.04 require manual Qt4 acquisition or bundling. Currently unsolved; realistic distribution is limited to Bionic/older.
+Linux `.deb`/`.rpm` and Windows NSIS `.exe` are produced via dedicated Docker images instead of by the developer's host directly:
+
+- `task package:linux` builds inside the Bionic-based Linux devcontainer and emits `.deb` + `.rpm` to `./artifacts/`. CPack generators are unchanged; only the runner moved.
+- `task images:build:win` (host, one-time, 30-60 min) builds a sibling image based on `debian:bookworm-slim` with [MXE](https://mxe.cc/) targeting `x86_64-w64-mingw32.static`. Qt is linked statically, so the resulting NSIS installer ships no DLLs.
+- `task package:win` (host) cross-compiles the Windows installer using that image and emits `./artifacts/Crochet_Charts-<ver>-win64.exe`.
+- The `MXE_REF` pin lives in `.devcontainer/win/Dockerfile`; bump via `--build-arg MXE_REF=<sha>` if upstream breaks.
+
+See `README.md` § "Building installers" and `Taskfile.yml` for the full task surface.
+
+## 7.5 Deployment risks
+
+- **Qt4 is unavailable** on modern distros. Linux DEB/RPM installs on Ubuntu ≥ 20.04 require manual Qt4 acquisition or bundling. The Linux packaging path is anchored to the Bionic devcontainer; native host builds on newer distros are not supported.
 - **macOS notarization** is not configured. Code-signing is present; notarization is needed for Gatekeeper-free launch on recent macOS. Add to CPack-Mac signing step if resumed.
 - **Windows code-signing** is not configured. Users hit SmartScreen warnings.
 

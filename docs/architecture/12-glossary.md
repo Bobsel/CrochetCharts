@@ -45,7 +45,7 @@ Terms that recur in this document and the codebase. Scoped to this project; gene
 |---|---|
 | `src/` | Flat application source — 99 `.cpp/.h`, 14 `.ui`. See `src/AGENTS.md`. |
 | `tests/` | QtTest unit tests. See `tests/AGENTS.md`. |
-| `stitches/` | 131 SVG stitch icons + `stitches.qrc`. See `stitches/AGENTS.md`. |
+| `stitches/` | 129 SVG stitch icons + `stitches.qrc`. See `stitches/AGENTS.md`. |
 | `cmake/modules/` | `FindHunSpell`, `GetGitRevisionDescription`, `DocbookGen`, NSIS template, `version.cpp.in`. |
 | `images/` | Toolbar icons + macOS `.iconset` bundles (`Crochet Charts.iconset`, `PatternDocument.iconset`). |
 | `docs/` | DocBook user guide source. `docs/architecture/` — this document. |

@@ -35,7 +35,7 @@ flowchart TB
     canvas["Canvas subsystem<br/><small>Scene + ChartView + Cells<br/>src/scene.cpp, chartview.cpp, cell.cpp</small>"]
     library["Stitch catalog<br/><small>StitchLibrary · StitchSet · Stitch<br/>singleton</small>"]
     io["File I/O<br/><small>FileFactory → File_v1/v2<br/>SaveFile</small>"]
-    undo["Undo subsystem<br/><small>QUndoStack + ≈18 QUndoCommand subclasses<br/>src/crochetchartcommands.cpp</small>"]
+    undo["Undo subsystem<br/><small>QUndoStack + 21 QUndoCommand subclasses<br/>(+3 in indicatorundo.h)<br/>src/crochetchartcommands.h</small>"]
     docks["Docks & dialogs<br/><small>Properties, Rows, Align, StitchLibraryUI,<br/>Export, Print, Settings</small>"]
     support["Support services<br/><small>Settings · AppInfo · errorhandler · updater</small>"]
 
@@ -66,7 +66,7 @@ flowchart TB
 | Canvas subsystem | Renders and edits the chart. All interactive logic for placing, moving, rotating, grouping, aligning, selecting, and stitch-mode switching lives here. | `Scene` (god class, 3626 lines), `ChartView`, `Cell`, `Indicator`, `ChartImage`, `Guideline`, `ItemGroup`, `ColorLegend`, `StitchLegend`, `ChartItemTools` |
 | Stitch catalog | Holds all available stitches grouped into sets (built-in and user). Loads XML + SVG assets on first access. | `StitchLibrary` (singleton), `StitchSet`, `Stitch` |
 | File I/O | Serialises/deserialises the whole chart graph. Versioned: `v1` is raw `QDataStream`, `v2` is XML frames + embedded binary icon blobs. | `File`, `FileFactory`, `File_v1`, `File_v2`, `SaveFile` |
-| Undo subsystem | Centralised command pattern: every mutator pushes a typed command onto the active tab's `QUndoStack`. | `SetCellStitch`, `SetCellRotation`, `RemoveCell`, `MoveCells`, `AddItem`, `RemoveItem`, etc. See `src/crochetchartcommands.h`. Indicator undo is parallel — `indicatorundo.{cpp,h}` |
+| Undo subsystem | Centralised command pattern: every mutator pushes a typed command onto the active tab's `QUndoStack`. | `SetCellStitch`, `SetItemRotation`, `SetItemCoordinates`, `AddItem`, `RemoveItem`, `RemoveItems`, `GroupItems`, `UngroupItems`, plus `SetLayer*` family. See `src/crochetchartcommands.h`. Indicator undo is parallel — `indicatorundo.{cpp,h}` |
 | Docks & dialogs | Side-panels and modal editors. `PropertiesDock` reacts to `Scene` selection, writes back via undo commands. | `PropertiesDock`, `RowsDock`, `AlignDock`, `StitchLibraryUI`, `ExportUI`, `SettingsUI` |
 | Support services | Orthogonal infrastructure: persisted prefs, version info, Qt message hook, update poller. | `Settings::inst()`, `AppInfo::inst()`, `errorHandler()`, `Updater` |
 
@@ -121,7 +121,7 @@ flowchart LR
     v2 -.resolves stitches via.-> library
 ```
 
-The `friend class` grant on `Scene`, `Cell`, `CrochetTab`, `Indicator`, `MainWindow` is what lets `File_vN` set private fields directly. The coupling is intentional (§ 2.3) — do not try to remove it without first introducing explicit `toSerialised()` / `fromSerialised()` methods on every data class.
+The `friend class` grant on `Scene`, `Cell`, `CrochetTab`, `Indicator`, `MainWindow`, `StitchSet`, `StitchLibrary`, `TabInterface` is what lets `File_vN` (and `SaveFile` / `FileFactory`) set private fields directly. The coupling is intentional (§ 2.3) — do not try to remove it without first introducing explicit `toSerialised()` / `fromSerialised()` methods on every data class.
 
 ## 5.5 Boundaries and ownership cheatsheet
 
@@ -131,7 +131,7 @@ Condensed rules for memory ownership — essential because Qt4's `QGraphicsScene
 |---|---|---|
 | `QApplication` | everything else, transitively | Destroyed in `main()` on `exec()` return. |
 | `MainWindow` | `CrochetTab` instances (via `QTabWidget`) | Tab close deletes the tab, which deletes the Scene+View. |
-| `CrochetTab` | `ChartView`, `Scene` (indirectly via View), `QUndoStack` | `ChartView` takes the scene as constructor arg but does **not** own it on the Qt4 `QGraphicsView` contract — ownership is manual here; check destructors before changing. |
+| `CrochetTab` | `ChartView`, `Scene` (via QObject parent on `ChartView`), `QUndoStack` | `Scene` is constructed with `mView` as its `QObject` parent (`src/crochettab.cpp:61`: `mScene = new Scene(mView)`), so Qt's parent/child mechanism destroys the scene when the view is destroyed. `mView->setScene(mScene)` is separate from ownership and only registers the scene with the view. |
 | `Scene` | every `QGraphicsItem` added to it | `addItem` transfers ownership to the scene. |
 | `ItemGroup` | child items during grouping | `destroyItemGroup` hands children back to the scene. |
 | `QUndoStack` | every `QUndoCommand` pushed onto it | Stack deletes on clear / overflow. |

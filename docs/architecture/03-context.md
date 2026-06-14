@@ -65,7 +65,7 @@ flowchart TB
 | File open/save | OS filesystem | Binary QDataStream (`v1`) or XML + QDataStream framing (`v2`) |
 | File association | Desktop / Launch Services | `vnd.stitchworks.pattern` MIME / UTI, `.crochetcharts` extension. See `resources/vnd.stitchworks.pattern.xml`. |
 | Settings | OS-native store | `QSettings` — Windows registry / `~/.config` / macOS plist |
-| Stitch assets | Qt resource system + user filesystem | 131 built-in SVGs via `:/stitches/` (see `stitches/stitches.qrc`); user-added sets under `Settings::instance().userPath()` |
+| Stitch assets | Qt resource system + user filesystem | 129 built-in SVGs via `:/stitches/` (see `stitches/stitches.qrc`); user-added sets under `Settings::instance().userPath()` |
 | Update check (optional) | HTTPS | `src/updater.cpp` polls an HTTP endpoint; disabled by default |
 
 **Out of scope**
