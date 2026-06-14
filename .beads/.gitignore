@@ -59,6 +59,13 @@ dolt-pprof/
 # Backup data (auto-exported JSONL, local-only)
 backup/
 
+# Interaction audit log (field-change events only — does NOT carry issue
+# bodies, which live in the gitignored embeddeddolt/). Tracking it gave
+# the false impression that issues were shared across clones; in fact
+# Beads is single-machine here (no Dolt remote). Treat as local-only
+# to keep the working tree clean across sessions.
+interactions.jsonl
+
 # Per-project environment file (Dolt connection config, GH#2520)
 .env
 
