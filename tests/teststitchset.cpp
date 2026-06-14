@@ -1,6 +1,7 @@
 /****************************************************************************\
  Copyright (c) 2010-2014 Stitch Works Software
  Brian C. Milco <bcmilco@gmail.com>
+ Copyright (c) 2026 Stefan Dieringer <stefan.dieringer@googlemail.com>
 
  This file is part of Crochet Charts.
 
@@ -27,11 +28,10 @@ void TestStitchSet::initTestCase()
 
 void TestStitchSet::setupStitchSet()
 {
-    //TODO: make a couple of test sets of stitches.
     QVERIFY(mSet->stitchCount() == 0);
-    mSet->loadXmlFile("../crochet.xml");
+    mSet->loadXmlFile("fixtures/basic_stitches.xml");
 
-    QVERIFY(mSet->stitchCount() == 109);
+    QCOMPARE(mSet->stitchCount(), 5);
 }
 
 void TestStitchSet::findStitch()
@@ -70,8 +70,12 @@ void TestStitchSet::findStitch_data()
     QTest::addColumn<QString>("cat");
     QTest::addColumn<QString>("ws");
 
-    QTest::newRow("sl st") << "sl st" << "stitches/slip.svg" << "slip stitch" << "Basic" << "sl st";
-    QTest::newRow("ch") << "ch" << "stitches/chain.svg" << "chain" << "Basic" << "ch";
+    QTest::newRow("sl st") << "sl st" << true  << ":/stitches/sl_st.svg" << "slip stitch"        << "Test" << "sl st";
+    QTest::newRow("ch")    << "ch"    << true  << ":/stitches/ch.svg"    << "chain"              << "Test" << "ch";
+    QTest::newRow("sc")    << "sc"    << true  << ":/stitches/sc.svg"    << "single crochet"     << "Test" << "sc";
+    QTest::newRow("hdc")   << "hdc"   << true  << ":/stitches/hdc.svg"   << "half double crochet"<< "Test" << "hdc";
+    QTest::newRow("dc")    << "dc"    << true  << ":/stitches/dc.svg"    << "double crochet"     << "Test" << "dc";
+    QTest::newRow("missing") << "does-not-exist" << false << "" << "" << "" << "";
 }
 
 void TestStitchSet::saveLoadDataSet()

@@ -1,6 +1,7 @@
 /****************************************************************************\
  Copyright (c) 2010-2014 Stitch Works Software
  Brian C. Milco <bcmilco@gmail.com>
+ Copyright (c) 2026 Stefan Dieringer <stefan.dieringer@googlemail.com>
 
  This file is part of Crochet Charts.
 
@@ -40,21 +41,15 @@ void TestStitchLibrary::findStitch()
 
     Stitch* s = StitchLibrary::inst()->findStitch(name);
 
-    if(!s) {
-        if(exists) {
-            QFAIL("stitch not found in set as it should have been");
-        } else {
-            QCOMPARE((bool)s, exists);
-            return;
-        }
+    QVERIFY(s != 0);
+    QCOMPARE(s->name(), name);
+    QCOMPARE(s->file(), file);
+
+    if (exists) {
+        QCOMPARE(s->description(), desc);
+        QCOMPARE(s->category(), cat);
+        QCOMPARE(s->wrongSide(), ws);
     }
-
-    QVERIFY(s->name() == name);
-    QVERIFY(s->file() == file);
-    QVERIFY(s->description() == desc);
-    QVERIFY(s->category() == cat);
-    QVERIFY(s->wrongSide() == ws);
-
 }
 
 void TestStitchLibrary::findStitch_data()
@@ -72,7 +67,7 @@ void TestStitchLibrary::findStitch_data()
     QTest::newRow("hdc") << "hdc" << true << ":/stitches/hdc.svg" << "half double crochet" << "Default" << "hdc";
     QTest::newRow("5-dc shell") << "5-dc shell" << true << ":/stitches/5dc_shell.svg"
                                     << "5 double crochet shell" << "Default" << "5-dc shell";
-    QTest::newRow("stitch dne") << "bcm" << false << "" << "" << "" << "";
+    QTest::newRow("stitch dne") << "bcm" << false << ":/stitches/unknown.svg" << "" << "" << "";
 
 }
 

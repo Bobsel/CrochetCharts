@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "CrochetCharts",
+  "project_id": "9306a219-d855-46de-83de-7392e793921c"
+}

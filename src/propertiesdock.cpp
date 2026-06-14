@@ -28,6 +28,7 @@
 #include "indicator.h"
 #include "ChartImage.h"
 #include <QGraphicsEllipseItem>
+#include <cmath>
 
 #include "ChartItemTools.h"
 #include "crochettab.h"

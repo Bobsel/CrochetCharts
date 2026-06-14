@@ -1,6 +1,7 @@
 /****************************************************************************\
  Copyright (c) 2010-2014 Stitch Works Software
  Brian C. Milco <bcmilco@gmail.com>
+ Copyright (c) 2026 Stefan Dieringer <stefan.dieringer@googlemail.com>
 
  This file is part of Crochet Charts.
 
@@ -24,6 +25,8 @@
 #include "testcell.h"
 #include "testtextview.h"
 #include "teststitchlibrary.h"
+#include "testfilefactory.h"
+#include "testchartview.h"
 
 int main(int argc, char** argv) 
 {
@@ -64,6 +67,16 @@ int main(int argc, char** argv)
     retval +=QTest::qExec(test, argc, argv);
     delete test;
     test = 0;
-    
+
+    test = new TestFileFactory();
+    retval +=QTest::qExec(test, argc, argv);
+    delete test;
+    test = 0;
+
+    test = new TestChartView();
+    retval +=QTest::qExec(test, argc, argv);
+    delete test;
+    test = 0;
+
     return (retval ? 1 : 0);
 }

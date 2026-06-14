@@ -1,0 +1,211 @@
+version: '3'
+
+vars:
+  BUILD_DIR: build
+  BUILD_DIR_RELEASE: build_release
+  BUILD_DIR_PROFILE: build_profile
+  BUILD_DIR_DOCS: build_docs
+  BUILD_DIR_PKG: build_pkg
+  BUILD_DIR_WIN: build_win
+  ARTIFACTS_DIR: artifacts
+  WIN_IMAGE: crochet-win-build
+  NPROC:
+    sh: nproc
+
+tasks:
+  _generate-icons:
+    internal: true
+    vars:
+      BUILD_DIR: '{{.BUILD_DIR | default "build_pkg"}}'
+      SIZES: "16 32 48 64 96 128 192 256 512"
+      FILES: "CrochetCharts stitchworks-pattern"
+    cmds:
+      - mkdir -p "{{.BUILD_DIR}}/icons"
+      - |
+        # Tries Inkscape 1.x flags first, falls back to 0.9x. Required because
+        # installers.cmake unconditionally installs build_pkg/icons into the
+        # Linux package.
+        for file in {{.FILES}}; do
+          for size in {{.SIZES}}; do
+            out="{{.BUILD_DIR}}/icons/${file}-${size}.png"
+            src="images/${file}.svg"
+            inkscape --export-type=png --export-width=$size --export-height=$size \
+                     --export-filename="$out" "$src" >/dev/null 2>&1 \
+              || inkscape -z --export-width=$size --export-height=$size \
+                          --export-png="$out" "$src" >/dev/null 2>&1
+          done
+        done
+
+  _clear-stale-cache:
+    internal: true
+    # CMake bakes absolute paths (CMAKE_HOME_DIRECTORY) into CMakeCache.txt.
+    # If the current source directory differs from the cached one (e.g. the
+    # devcontainer was first opened in VS Code at /workspaces/... and later
+    # in IntelliJ at /IdeaProjects/...), cmake refuses to regenerate. Wipe
+    # the build dir when that happens so the next cmake invocation starts
+    # cleanly.
+    vars:
+      DIR: '{{.DIR | default "build"}}'
+    cmds:
+      - |
+        if [ -f "{{.DIR}}/CMakeCache.txt" ]; then
+          cached=$(sed -n 's/^CMAKE_HOME_DIRECTORY:INTERNAL=//p' "{{.DIR}}/CMakeCache.txt")
+          if [ "$cached" != "$(pwd)" ]; then
+            echo "Stale CMake cache in {{.DIR}}: '$cached' != '$(pwd)' — clearing"
+            rm -rf "{{.DIR}}"
+          fi
+        fi
+
+  build:
+    desc: Debug build (CMake + make)
+    cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR}}'}
+      - mkdir -p {{.BUILD_DIR}}
+      - cd {{.BUILD_DIR}} && cmake .. -DCMAKE_BUILD_TYPE=Debug -Wno-dev
+      - cd {{.BUILD_DIR}} && make -j{{.NPROC}}
+    sources:
+      - src/**/*.cpp
+      - src/**/*.h
+      - src/**/*.ui
+      - CMakeLists.txt
+      - src/CMakeLists.txt
+
+  build:release:
+    desc: Release build
+    cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR_RELEASE}}'}
+      - mkdir -p {{.BUILD_DIR_RELEASE}}
+      - cd {{.BUILD_DIR_RELEASE}} && cmake .. -DCMAKE_BUILD_TYPE=Release -Wno-dev
+      - cd {{.BUILD_DIR_RELEASE}} && make -j{{.NPROC}}
+    sources:
+      - src/**/*.cpp
+      - src/**/*.h
+      - src/**/*.ui
+      - CMakeLists.txt
+      - src/CMakeLists.txt
+
+  run:
+    desc: Build and launch the app
+    deps: [build]
+    cmds:
+      - ./{{.BUILD_DIR}}/src/CrochetCharts
+
+  test:
+    desc: Build with tests and run them (uses xvfb-run if available, for headless CI/devcontainer)
+    cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR}}'}
+      - mkdir -p {{.BUILD_DIR}}
+      - cd {{.BUILD_DIR}} && cmake .. -DCMAKE_BUILD_TYPE=Debug -DUNIT_TESTING=ON -Wno-dev
+      - cd {{.BUILD_DIR}} && make -j{{.NPROC}}
+      # Run from tests/ so CWD-relative inputs (../crochet.xml, ../stitches/*.svg) resolve.
+      - |
+        if command -v xvfb-run >/dev/null 2>&1; then
+          (cd tests && xvfb-run -a --server-args='-screen 0 1024x768x24' ../{{.BUILD_DIR}}/tests/tests)
+        else
+          (cd tests && ../{{.BUILD_DIR}}/tests/tests)
+        fi
+
+  clean:
+    desc: Remove all build artifacts
+    cmds:
+      - rm -rf {{.BUILD_DIR}} {{.BUILD_DIR_RELEASE}} {{.BUILD_DIR_PROFILE}} {{.BUILD_DIR_DOCS}} {{.BUILD_DIR_PKG}} {{.BUILD_DIR_WIN}} {{.ARTIFACTS_DIR}}
+
+  package:linux:
+    desc: Build Release + .deb/.rpm (run INSIDE the Linux devcontainer)
+    cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR_PKG}}'}
+      - mkdir -p {{.BUILD_DIR_PKG}} {{.ARTIFACTS_DIR}}
+      - cd {{.BUILD_DIR_PKG}} && cmake .. -DCMAKE_BUILD_TYPE=Release -DDOCS=ON -DAMD64=ON -Wno-dev
+      - cd {{.BUILD_DIR_PKG}} && make -j{{.NPROC}}
+      - task: _generate-icons
+        vars: {BUILD_DIR: '{{.BUILD_DIR_PKG}}'}
+      - cd {{.BUILD_DIR_PKG}} && cpack
+      - |
+        # POSIX-safe no-match handling: go-task runs commands via /bin/sh,
+        # which on Debian/Ubuntu is dash — `shopt -s nullglob` would fail
+        # there. Unset globs expand to their literal pattern, so guard
+        # each iteration with an existence test.
+        for f in {{.BUILD_DIR_PKG}}/*.deb {{.BUILD_DIR_PKG}}/*.rpm; do
+          [ -e "$f" ] || continue
+          cp -v "$f" {{.ARTIFACTS_DIR}}/
+        done
+      - ls -la {{.ARTIFACTS_DIR}}/
+
+  images:build:win:
+    desc: Build the MXE Windows cross-compile Docker image (run on the HOST, ~30-60 min first time)
+    cmds:
+      - docker build -f .devcontainer/win/Dockerfile
+          --build-arg USER_UID=$(id -u)
+          --build-arg USER_GID=$(id -g)
+          -t {{.WIN_IMAGE}} .devcontainer/win/
+
+  package:win:
+    desc: Cross-compile Windows NSIS installer (run on the HOST; requires {{.WIN_IMAGE}} image)
+    cmds:
+      - mkdir -p {{.ARTIFACTS_DIR}}
+      - docker run --rm -v "$PWD:/src" -w /src {{.WIN_IMAGE}} task package:win:inner
+      - ls -la {{.ARTIFACTS_DIR}}/
+
+  package:win:inner:
+    desc: Executed inside the MXE container by `task package:win` — not useful to invoke directly
+    cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR_WIN}}'}
+      - mkdir -p {{.BUILD_DIR_WIN}} {{.ARTIFACTS_DIR}}
+      - cd {{.BUILD_DIR_WIN}} && x86_64-w64-mingw32.static-cmake .. -DCMAKE_BUILD_TYPE=Release -Wno-dev
+      - cd {{.BUILD_DIR_WIN}} && make -j{{.NPROC}}
+      - cd {{.BUILD_DIR_WIN}} && cpack -G NSIS
+      - |
+        # POSIX-safe no-match handling — see comment in package:linux.
+        for f in {{.BUILD_DIR_WIN}}/*.exe; do
+          [ -e "$f" ] || continue
+          cp -v "$f" {{.ARTIFACTS_DIR}}/
+        done
+
+  artifacts:clean:
+    desc: Remove ./artifacts and the package build dirs
+    cmds:
+      - rm -rf {{.ARTIFACTS_DIR}} {{.BUILD_DIR_PKG}} {{.BUILD_DIR_WIN}}
+
+  docs:
+    desc: Build the end-user manual (HTML + PDF) via DocBook + xsltproc + FOP
+    cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR_DOCS}}'}
+      - mkdir -p {{.BUILD_DIR_DOCS}}
+      # DocbookGen.cmake runs xsltproc/fop via execute_process at configure
+      # time, so a single cmake invocation produces the manual. No `make` needed.
+      - cd {{.BUILD_DIR_DOCS}} && cmake .. -DCMAKE_BUILD_TYPE=Release -DDOCS=ON -Wno-dev
+      - |
+        echo
+        echo "Manual written:"
+        echo "  HTML: {{.BUILD_DIR_DOCS}}/docs/html/index.html"
+        echo "  PDF:  {{.BUILD_DIR_DOCS}}/docs/pdf/"
+        ls -1 {{.BUILD_DIR_DOCS}}/docs/pdf/*.pdf 2>/dev/null | sed 's|^|        |'
+
+  docs:clean:
+    desc: Remove docs build artifacts only
+    cmds:
+      - rm -rf {{.BUILD_DIR_DOCS}}
+
+  setup:
+    desc: Install git hooks
+    cmds:
+      - cp utils/hooks/* .git/hooks/
+      - echo "Hooks installed."
+
+  profile:
+    desc: Profile build, run, and generate call graph
+    cmds:
+      - task: _clear-stale-cache
+        vars: {DIR: '{{.BUILD_DIR_PROFILE}}'}
+      - mkdir -p {{.BUILD_DIR_PROFILE}}
+      - cd {{.BUILD_DIR_PROFILE}} && cmake .. -DCMAKE_BUILD_TYPE=Profile -Wno-dev
+      - cd {{.BUILD_DIR_PROFILE}} && make -j{{.NPROC}}
+      - ./{{.BUILD_DIR_PROFILE}}/src/CrochetCharts
+      - gprof {{.BUILD_DIR_PROFILE}}/src/CrochetCharts | bin/gprof2dot.py | dot -Tpng -o profile.png
+      - echo "Call graph written to profile.png"

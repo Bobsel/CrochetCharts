@@ -1,0 +1,86 @@
+name: build
+
+on:
+  push:
+    # Only master triggers push-event CI. Feature/integration branches
+    # are covered by the `pull_request:` trigger below as soon as a PR
+    # is opened; keeping them in this list would just duplicate every
+    # PR-branch push into two parallel runs (one push, one PR), since
+    # `concurrency` uses `github.ref` and the two events have different
+    # refs (`refs/heads/<branch>` vs `refs/pull/<n>/merge`).
+    branches: [master]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-build-test:
+    name: Build & test (Ubuntu 18.04 devcontainer)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      # Full history is required because the version string is derived from
+      # `git describe --tags --dirty=w`; a shallow clone breaks it.
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Build the devcontainer image fresh per run, but reuse Bionic apt layers
+      # through the GitHub Actions cache backend (`type=gha`). `load: true`
+      # makes the image available to the local Docker daemon so the next step
+      # can `docker run` it without a push to a registry.
+      - name: Build devcontainer image
+        uses: docker/build-push-action@v7
+        with:
+          context: .devcontainer
+          file: .devcontainer/Dockerfile
+          tags: crochet-ci:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # We run as root inside the container (--user root). The devcontainer
+      # image creates a `vscode` UID 1000 user for interactive use, but in CI
+      # we don't need that — root sidesteps any UID mismatch between the
+      # bind-mounted workspace (owned by the GHA runner user) and the
+      # container user, and keeps the workflow simpler than juggling
+      # USER_UID/USER_GID build args.
+      - name: Build and test inside container
+        run: |
+          docker run --rm \
+            --user root \
+            -v "$PWD:/workspaces/CrochetCharts" \
+            -w /workspaces/CrochetCharts \
+            crochet-ci:latest \
+            bash -c "git config --global --add safe.directory /workspaces/CrochetCharts && task build && task test"
+
+      - name: Upload build artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-and-test-output
+          path: |
+            build/
+            tests/*.png
+          if-no-files-found: ignore
+          retention-days: 7

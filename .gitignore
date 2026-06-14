@@ -1,5 +1,7 @@
-build*
-qbuild*
+/build*/
+/qbuild*/
+/.task/
+artifacts/
 bin/Makefile
 *~
 CMakeLists.txt.user*
@@ -14,3 +16,17 @@ Makefile.Debug
 Makefile.Release
 object_script.CrochetCharts.Debug
 object_script.CrochetCharts.Release
+.idea
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+
+# Internal planning notes and VM-acceptance automation. Kept as local
+# working scratch only; the public repo does not need to expose
+# in-progress plans or the KVM/QEMU setup scripts. Same rationale as
+# the beads scratchpad: solo workflow, GitHub Issues for anything
+# user-facing.
+/docs/plans/

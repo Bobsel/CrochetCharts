@@ -1,6 +1,7 @@
 /****************************************************************************\
  Copyright (c) 2013-2014 Stitch Works Software
  Brian C. Milco <bcmilco@gmail.com>
+ Copyright (c) 2026 Stefan Dieringer <stefan.dieringer@googlemail.com>
 
  This file is part of Crochet Charts.
 
@@ -40,11 +41,6 @@ void TestTextView::initTestCase()
     qDebug() << mTextGrid;
 }
 
-void TestTextView::testGenerateText()
-{
-
-}
-
 void TestTextView::testGenerateTextRow()
 {
     QFETCH(int, row);
@@ -78,20 +74,20 @@ void TestTextView::testGenerateTextRow_data()
      QTest::addColumn<QString>("cleanOutput");
      QTest::addColumn<QString>("repeatOutput");
      QTest::addColumn<QString>("cleanRepeat");
-     
-     QTest::newRow("row 1") << 1 << "" << "" << "" << "";
 
-}
+     const QString row1Plain =
+         "ch 1, twisted sc 1, tr 1, hdc3tog 1, ch 1, tr 1, hdc2tog 1, twisted sc 1, tr 1";
+     const QString row1Clean =
+         "Ch 1, twisted sc 1, tr 1, hdc3tog 1, ch 1, tr 1, hdc2tog 1, twisted sc 1, tr 1.";
 
-void TestTextView::testCopyInstructions_data()
-{
+     QTest::newRow("row 1") << 1 << row1Plain << row1Clean << row1Plain << row1Clean;
 
 }
 
 void TestTextView::testCopyInstructions()
 {
     QString instructions = mTv->copyInstructions();
-    qDebug() << instructions;
+    QVERIFY(!instructions.isEmpty());
 }
 
 void TestTextView::cleanupTestCase()

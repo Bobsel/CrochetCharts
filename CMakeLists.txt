@@ -34,6 +34,24 @@ include(FindHunSpell)
 include(GetGitRevisionDescription)
 git_describe(VERSION --tags --dirty=w)
 
+# Fallback when the tree has no tags reachable from HEAD. Lets beta/CI builds
+# produce versioned packages before the first release tag is cut. Real releases
+# should be tagged (e.g. `git tag v2.0.0`) so git_describe yields a proper version.
+if(NOT VERSION OR VERSION MATCHES "NOTFOUND" OR VERSION STREQUAL "")
+    execute_process(
+        COMMAND git rev-parse --short HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE _GIT_SHORT_SHA
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if(_GIT_SHORT_SHA)
+        set(VERSION "0.0.0-${_GIT_SHORT_SHA}")
+    else()
+        set(VERSION "0.0.0-dev")
+    endif()
+endif()
+
 string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" VERSION_MAJOR "${VERSION}")
 string(REGEX REPLACE "^[0-9]+\\.([0-9]+).*" "\\1" VERSION_MINOR "${VERSION}")
 string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" VERSION_PATCH "${VERSION}")
@@ -91,6 +109,7 @@ add_subdirectory(docs)
 add_subdirectory(src)
 
 if(UNIT_TESTING)
+    enable_testing()
     add_subdirectory(tests)
 endif()
 
