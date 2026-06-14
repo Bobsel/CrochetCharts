@@ -16,3 +16,9 @@ Makefile.Release
 object_script.CrochetCharts.Debug
 object_script.CrochetCharts.Release
 .idea
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
