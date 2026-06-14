@@ -1,5 +1,6 @@
-build*
-qbuild*
+/build*/
+/qbuild*/
+/.task/
 artifacts/
 bin/Makefile
 *~

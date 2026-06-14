@@ -1,5 +1,7 @@
 # Crochet Charts
 
+[![build](https://github.com/Bobsel/CrochetCharts/actions/workflows/build.yml/badge.svg)](https://github.com/Bobsel/CrochetCharts/actions/workflows/build.yml)
+
 Desktop crochet chart editor built with Qt4 and C++11. Uses QGraphicsScene for canvas rendering and SVG for stitch icons.
 
 This software is licensed under GPLv3. All original artwork is licensed under Creative Commons Attribution-ShareAlike ( cc by-sa 4.0 ).
