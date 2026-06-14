@@ -3,7 +3,17 @@ name: build
 on:
   push:
     branches: [master, upgrade]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
 
 permissions:
   contents: read
@@ -22,19 +32,19 @@ jobs:
       # Full history is required because the version string is derived from
       # `git describe --tags --dirty=w`; a shallow clone breaks it.
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Build the devcontainer image fresh per run, but reuse Bionic apt layers
       # through the GitHub Actions cache backend (`type=gha`). `load: true`
       # makes the image available to the local Docker daemon so the next step
       # can `docker run` it without a push to a registry.
       - name: Build devcontainer image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .devcontainer
           file: .devcontainer/Dockerfile
@@ -60,7 +70,7 @@ jobs:
 
       - name: Upload build artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-and-test-output
           path: |
